@@ -1,0 +1,358 @@
+/* Zona Drag & Drop para input de archivo */
+.dfm-dropzone {
+    border: 2px dashed #FF9020;
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    text-align: center;
+    color: #6b7280;
+    background: #f8fafc;
+    transition: border-color 0.2s, background 0.2s;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+.dfm-dropzone:hover, .dfm-dropzone.dfm-dropzone-active {
+    border-color: #f59e0b;
+}
+
+/* Input de archivo moderno tipo botón grande */
+.dfm-file-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    background: #f59e0b;
+    color: #fff;
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    border: none;
+    gap: 0.5rem;
+}
+.dfm-file-upload-btn:hover {
+    background: #f59e0b ;
+}
+.dfm-file-upload-btn input[type="file"] {
+    display: none;
+}
+.dfm-overlay { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background-color: rgba(0, 0, 0, 0.5); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: 1000; 
+    animation: dfmFadeIn 0.2s ease-out; 
+}
+
+.dfm-content { 
+    background-color: #ffffff; 
+    border-radius: 12px; 
+    width: 100%; 
+    max-width: 700px; 
+    max-height: 90vh; 
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+}
+
+.dfm-header {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1.2rem 2rem; /* padding solo arriba y abajo, no a los costados */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #FF9020; /* tu color rosa, cámbialo por el que quieras */
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+.dfm-header h2 { 
+    margin: 0; 
+    color: #1f2937; 
+    font-size: 1.5rem; 
+}
+
+.dfm-body {
+  flex: 1;               /* ocupa el espacio disponible */
+  overflow-y: auto;      /* scroll SOLO acá */
+  padding: 0 2rem 2rem 2rem; /* padding a los costados y abajo */
+}
+
+.dfm-close { 
+    background: none; 
+    border: none; 
+    font-size: 1.8rem; 
+    cursor: pointer; 
+    color: #1f2937; 
+}
+
+.dfm-section-title {
+    color: #6b7280; 
+    font-size: 1rem; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px; 
+    border-bottom: 2px solid #f59e0b; 
+    padding-bottom: 0.5rem; 
+
+}
+.dfm-row { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr 1fr; 
+    gap: 1rem; 
+}
+
+.dfm-row-f-d {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1rem;
+}
+
+.dfm-row-doc {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.dfm-row-admin {
+    display: grid;
+    grid-template-columns: 1fr 1fr ;
+    gap: 1rem;
+}
+
+.dfm-group { 
+    margin-bottom: 0.5rem; 
+}
+
+.dfm-group label {      
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151; /* gris medio */
+}
+
+.dfm-input {  width: 100%;
+  padding: 0.85rem 1rem;
+  background-color: #f3f4f6;      /* gris claro */
+  border: 1px solid transparent; /* casi invisible */
+  border-radius: 9999px;          /* ultra redondeado */
+  font-size: 0.95rem;
+  color: #111827;                 /* gris oscuro */
+  transition: all 0.2s ease;}
+.dfm-input:focus {  outline: none;
+  background-color: #ffffff;
+  border-color: #fb923c; /* naranja suave */
+  box-shadow: 0 0 0 4px rgba(251, 146, 60, 0.15);}
+
+.dfm-textarea { 
+    width: 100%; 
+    height: 80px ;
+    padding: 0.75rem; 
+    border: 1px solid #d1d5db; 
+    border-radius: 8px; 
+    font-size: 1rem; 
+    font-family: inherit;
+    transition: border-color 0.2s; 
+    box-sizing: border-box; 
+    resize: vertical;
+}
+.dfm-textarea:focus { 
+    outline: none; 
+    border-color: #2563eb; 
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); 
+}
+
+.dfm-admin-zone { background: #fef2f2; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+
+.dfm-actions { 
+    display: flex; 
+    justify-content: flex-end; 
+    gap: 1rem; 
+    margin-top: 1rem; 
+}
+.dfm-btn-cancel { 
+    background: transparent; 
+    border: 1px solid #d1d5db; 
+    padding: 0.75rem 1.5rem; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    color: #4b5563; 
+    font-weight: 600; 
+}
+
+.dfm-btn-cancel:hover { 
+    background: #f3f4f6; 
+}
+
+.dfm-btn-save { 
+    background-color: #FF9020; 
+    color: white; 
+    border: none; 
+    padding: 0.75rem 1.5rem; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-weight: 600;
+ }
+
+.dfm-btn-save:hover { 
+    background-color: #f59e0b; 
+}
+
+/* Estilos para el link de archivo existente */
+.dfm-existing-file {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #f0fdf4;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #bbf7d0;
+    width: fit-content;
+}
+
+.dfm-existing-label {
+    color: #166534;
+    font-weight: 600;
+}
+
+.dfm-existing-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.dfm-existing-link:hover {
+    text-decoration: underline;
+}
+
+.dfm-file-card-existing {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffd181;
+    border: 1px solid #FF9020;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    margin-top: 5px;
+}
+
+.dfm-file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #1f2937;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.dfm-file-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.dfm-btn-mini {
+    background: white;
+    border: 1px solid #e0e7ff;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s;
+    text-decoration: none; /* Para el label que actúa como botón */
+}
+
+.dfm-btn-mini:hover { transform: scale(1.1); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.dfm-btn-mini.view { color: #2563eb; }
+.dfm-btn-mini.replace { 
+    color: #d97706;
+    margin-bottom: 0px;
+    background: white;
+    border: 1px solid #e0e7ff;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+.dfm-btn-mini.delete { color: #dc2626; }
+
+/* Estado Borrado */
+.dfm-file-card-deleted {
+    background-color: #fef2f2;
+    border: 1px dashed #fca5a5;
+    color: #b91c1c;
+    padding: 0.6rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dfm-link-btn {
+    background: none; border: none;
+    color: #4b5563; text-decoration: underline;
+    cursor: pointer; font-size: 0.85rem;
+}
+
+/* Estado Nuevo Seleccionado */
+.dfm-file-card-new {
+    background-color: #f0fdf4;
+    border: 1px solid #86efac;
+    padding: 0.6rem;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.dfm-success-text { color: #15803d; font-size: 0.9rem; font-weight: 500; }
+.dfm-close-btn { background: none; border: none; font-size: 1.2rem; color: #15803d; cursor: pointer; }
+@keyframes dfmFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+/* ==============================
+   Saving indicator (modal)
+============================== */
+.dfm-saving-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #9a3412;
+}
+
+.dfm-spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #fed7aa;
+  border-top-color: #FF9020;
+  border-radius: 50%;
+  animation: dfmSpin 0.8s linear infinite;
+}
+
+@keyframes dfmSpin {
+  to { transform: rotate(360deg); }
+}

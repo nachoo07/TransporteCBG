@@ -1,0 +1,171 @@
+/* ===== MODAL BASE ===== */
+.cdm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.cdm-content {
+  background: #ffffff;
+  border-radius: 14px;
+  width: 95vw;
+  max-width: 720px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ===== HEADER PERFIL ===== */
+.cdm-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #FF9020;
+}
+
+
+.cdm-profile-main {
+  flex: 1;
+}
+
+.cdm-card-danger {
+  border: 2px solid #ef4444;
+}
+
+.cdm-card-warning {
+  border: 2px solid #facc15;
+}
+
+.cdm-condition.al_dia {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.cdm-condition.proximo {
+  color: #ca8a04;
+  font-weight: 700;
+}
+
+.cdm-condition.vencido {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.cdm-status-badge {
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.cdm-status-badge.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.cdm-status-badge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.cdm-close-x {
+  background: none;
+  border: none;
+  font-size: 1.7rem;
+  cursor: pointer;
+  color: #9ca3af;
+}
+
+/* ===== BODY ===== */
+.cdm-body {
+  padding: 1.5rem 2rem;
+  background: #f8fafc;
+  overflow-y: auto;
+}
+
+.cdm-section {
+  margin-bottom: 2rem;
+}
+
+.cdm-section-title {
+ display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid #FF9020; padding-bottom: 1.5rem; flex-wrap: wrap; 
+}
+
+/* ===== GRID ===== */
+.cdm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.cdm-grid-info {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.cdm-card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.cdm-card label {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.cdm-card span {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* ===== LINKS ===== */
+.cdm-btn-link {
+  margin-top: 0.4rem;
+  background: none;
+  border: none;
+  color: #FF9020;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  align-self: flex-start;
+}
+
+/* ===== FOOTER ===== */
+.cdm-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 2rem;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+}
+
+.cdm-btn-secondary {
+  background: #ffffff;
+  border: 1.5px solid #FF9020;
+  color: #FF9020;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cdm-btn-secondary:hover {
+  background: #FF9020;
+  color: #ffffff;
+}

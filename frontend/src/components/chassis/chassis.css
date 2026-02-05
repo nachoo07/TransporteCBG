@@ -1,0 +1,502 @@
+/* Layout Principal */
+.chassis-layout {
+    background-color: #f3f4f6;
+    min-height: 100vh;
+}
+
+.chassis-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+/* Cabecera (Título y Botón) */
+.chassis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.chassis-header h1 {
+    font-size: 1.8rem;
+    color: #1f2937;
+    margin: 0;
+    font-weight: 700;
+}
+
+.btn-add-chassis {
+  background: #FF9020;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-add-chassis:hover {
+  background: #f79a3e;
+}
+
+/* Contenedor de la Tabla (Tarjeta Blanca) */
+.table-wrapper {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    overflow-x: auto; /* Para que sea responsive */
+    border: 1px solid #e5e7eb;
+}
+
+/* Estilos de la Tabla */
+.chassis-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.chassis-table th {
+    background-color: #f9fafb;
+    padding: 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6b7280;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.chassis-table td {
+    padding: 1rem;
+    color: #1f2937;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.95rem;
+}
+
+.chassis-table tr:hover {
+    background-color: #f8fafc; /* Efecto hover en las filas */
+}
+
+/* Semáforos (Luces de estado) */
+.traffic-light {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.light-green { 
+    background-color: #22c55e; 
+    box-shadow: 0 0 6px #22c55e; 
+}
+
+.light-yellow { 
+    background-color: #eab308; 
+    box-shadow: 0 0 6px #eab308; 
+}
+
+.light-red { 
+    background-color: #ef4444; 
+    box-shadow: 0 0 6px #ef4444; 
+}
+
+/* Botones de Acción dentro de la tabla */
+.chassis-table button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0.4rem;
+    border-radius: 6px;
+    transition: background-color 0.2s, transform 0.1s;
+    margin-right: 0.5rem;
+}
+
+.chassis-table button:hover {
+    background-color: #f3f4f6;
+    transform: scale(1.1);
+}
+
+/* --- Badges para la columna Operativo --- */
+.badge-active-text {
+    background-color: #dcfce7;
+    color: #166534;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.badge-inactive-text {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* --- Botón Ver (Ojo) --- */
+.action-btn.view:hover {
+    background-color: #e0f2fe; /* Azul clarito */
+    color: #0284c7;
+}
+
+/* --- Estilos internos del Modal de Detalle --- */
+.modal-body-scroll {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.detail-section h4 {
+    color: #374151;
+    border-bottom: 2px solid #f3f4f6;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+    margin-top: 0;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.detail-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.detail-section label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #6b7280;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.detail-section p, .detail-section span {
+    font-size: 1rem;
+    color: #111827;
+}
+
+.detail-files-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.detail-file-link {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px;
+    background-color: #eff6ff;
+    color: #2563eb;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+.detail-file-link:hover {
+    background-color: #dbeafe;
+}
+
+.detail-no-file {
+    font-size: 0.9rem;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.divider {
+    border: 0;
+    border-top: 1px solid #e5e7eb;
+    margin: 20px 0;
+}
+
+/* GRID DE FECHAS */
+.dates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+/* TARJETA DE FECHA INDIVIDUAL */
+.date-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background-color: white;
+    transition: transform 0.2s;
+}
+
+.date-card:hover { transform: translateY(-2px); }
+
+.date-card label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    color: #4b5563;
+}
+
+.date-value {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.date-badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* --- COLORES SEMÁFORO --- */
+
+/* 🟢 AL DÍA */
+.date-card.good {
+    background-color: #f0fdf4; /* Verde muy claro */
+    border-color: #86efac;
+}
+.date-card.good .date-value { color: #15803d; }
+.date-card.good .date-badge { background-color: #dcfce7; color: #166534; }
+
+/* 🟡 PRÓXIMO (<= 30 días) */
+.date-card.warning {
+    background-color: #fefce8; /* Amarillo muy claro */
+    border-color: #fde047;
+}
+.date-card.warning .date-value { color: #a16207; }
+.date-card.warning .date-badge { background-color: #fef9c3; color: #854d0e; }
+
+/* 🔴 VENCIDO */
+.date-card.expired {
+    background-color: #fef2f2; /* Rojo muy claro */
+    border-color: #fca5a5;
+}
+.date-card.expired .date-value { color: #b91c1c; }
+.date-card.expired .date-badge { background-color: #fee2e2; color: #991b1b; }
+
+/* ⚪ VACÍO */
+.date-card .empty { color: #9ca3af; font-style: italic; }
+
+
+/* RESUMEN SUPERIOR (Overview Cards) */
+.status-overview {
+    display: flex;
+    gap: 15px;
+}
+.overview-card {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #e5e7eb;
+}
+.overview-card.active { background-color: #f0fdf4; color: #166534; border-color: #86efac; }
+.overview-card.inactive { background-color: #fef2f2; color: #991b1b; border-color: #fca5a5; }
+
+/* PESTAÑAS (Tabs) */
+.tabs-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 0;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.tab-button {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6b7280;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+    color: #1f2937;
+}
+
+.tab-button.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+}
+
+/* FILAS INACTIVAS */
+.inactive-row {
+    opacity: 0.6;
+    background-color: #f9fafb;
+}
+
+/* MODALES */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #1f2937;
+    font-size: 1.5rem;
+}
+
+.modal-content p {
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.consequence-list {
+    background-color: #f3f4f6;
+    border-left: 4px solid #ef4444;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+}
+
+.consequence-list p {
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.consequence-list ul {
+    margin: 0.5rem 0 0 0;
+    padding-left: 1.5rem;
+}
+
+.consequence-list li {
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.btn-cancel {
+    background-color: #e5e7eb;
+    color: #1f2937;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-cancel:hover {
+    background-color: #d1d5db;
+}
+
+.btn-confirm-delete {
+    background-color: #dc2626;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-confirm-delete:hover {
+    background-color: #b91c1c;
+}
+
+.btn-confirm-reactivate {
+    background-color: #16a34a;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-confirm-reactivate:hover {
+    background-color: #15803d;
+}
+
+.reactivate-modal {
+    border-top: 4px solid #16a34a;
+}
+
+/* BOTÓN REACTIVAR EN TABLA */
+.action-btn.reactivate {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    padding: 0.5rem;
+    border: 1px solid #86efac;
+}
+
+.action-btn.reactivate:hover {
+    background-color: #16a34a;
+    color: white;
+}
+
+/* PAGINACIÓN CHASIS */
+.chassis-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.chassis-pagination-btn {
+  background: #fff;
+  color: #FF9020;
+  border: 1.5px solid #f59e0b;
+  border-radius: 999px;
+  padding: 0.45rem 1.1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 2px;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+}
+.chassis-pagination-btn.active,
+.chassis-pagination-btn:hover:not(:disabled) {
+  background: #FF9020;
+  color: #fff;
+  border-color: #f59e0b;
+}
+.chassis-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

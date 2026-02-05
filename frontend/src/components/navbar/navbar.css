@@ -1,0 +1,139 @@
+/* ==================== NAVBAR PRINCIPAL ==================== */
+/* Sobrescribimos la clase base de bootstrap o usamos nuestra clase custom */
+.navbar-custom {
+  background: linear-gradient(135deg, #FF9020 0%, #FF7F12 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.8rem 1rem;
+  /* Sticky opcional */
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* ==================== LOGO ==================== */
+.navbar-logo-icon {
+  background: white;
+  color: #FF9020;
+  font-weight: 800;
+  font-size: 1.2rem;
+  padding: 6px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-logo-text {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.5px;
+}
+
+/* ==================== ENLACES DE NAVEGACIÓN ==================== */
+/* Bootstrap usa la clase .nav-link */
+.navbar-custom .nav-link {
+  color: rgba(255, 255, 255, 0.9) !important; /* Forzamos blanco */
+  font-size: 1.1rem;
+  font-weight: 500;
+  padding: 8px 16px !important;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  margin: 0 2px;
+}
+
+.navbar-custom .nav-link:hover,
+.navbar-custom .nav-link:focus {
+  background: rgba(255, 255, 255, 0.2);
+  color: white !important;
+  transform: translateY(-2px);
+}
+
+/* Dropdown título activo */
+.navbar-custom .nav-link.show {
+  color: white !important;
+}
+
+.navbar-nav {
+  margin-right: 0px !important;
+  margin-left: 130px !important;
+}
+
+.navbar-collapse {
+  justify-content: space-between;
+}
+/* ==================== DROPDOWN MENÚ ==================== */
+/* Estilos para el menú desplegable interno */
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.dropdown-item {
+  font-size: 0.9rem;
+  padding: 8px 20px;
+  color: #333;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(255, 144, 32, 0.1);
+  color: #FF9020;
+}
+
+.dropdown-item:active {
+  background-color: #FF9020;
+  color: white;
+}
+
+/* ==================== USUARIO Y BOTÓN ==================== */
+.navbar-username {
+  font-size: 1.1rem;
+  white-space: nowrap;
+  text-transform: capitalize;
+
+}
+
+.navbar-logout-btn {
+  background: white;
+  color: #FF9020;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+}
+
+.navbar-logout-btn:hover {
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+/* ==================== HAMBURGUESA (MÓVIL) ==================== */
+/* Ajuste del botón toggle de bootstrap para que se vea bien en naranja */
+.navbar-toggler {
+  border: none; 
+  padding: 0.25rem 0.5rem;
+}
+
+.navbar-toggler:focus {
+  box-shadow: none; /* Quita el borde azul por defecto */
+}
+
+/* Ajustes Responsive extra si es necesario */
+@media (max-width: 991px) {
+  .user-actions {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: 1rem;
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  
+  .navbar-logout-btn {
+    width: 100%;
+  }
+}
