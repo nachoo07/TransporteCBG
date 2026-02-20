@@ -1,5 +1,5 @@
 import React from 'react'
-import '../coupledFormModal/CoupledFormModal.css'
+import '../coupledFormModal/coupledFormModal.css';
 
 const CoupledDetailModal = ({ isOpen, onClose, coupled }) => {
     if (!isOpen || !coupled) return null;
