@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import CoupledFormModal from '../../components/coupledFormModal/CoupledFormModal';
 import CoupledDetailModal from '../../components/coupledDetailModal/CoupledDetailModal';
 import { useCoupled } from '../../context/coupled/CoupledContext';
+import '../chassis/chassis.css';
 
 const Coupled = () => {
     const { coupled, inactiveCoupled, loading, createCoupled, updateCoupled, deleteCoupled, reactivateCoupled, getCoupledById } = useCoupled();
@@ -20,9 +21,6 @@ const Coupled = () => {
     // Paginación
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
-
-    // Modal de confirmación para reactivación
-    const [reactivateConfirmModal, setReactivateConfirmModal] = useState({ isOpen: false, coupled: null });
 
     // Estado de busqueda
     const [search, setSearch] = useState('');
@@ -60,18 +58,6 @@ const Coupled = () => {
         deleteCoupled(coupled.id);
     };
 
-    // Manejo de reactivación
-    const handleReactivateClick = (coupled) => {
-        setReactivateConfirmModal({ isOpen: true, coupled });
-    };
-
-    const handleConfirmReactivate = async () => {
-        if (reactivateConfirmModal.coupled) {
-            await reactivateCoupled(reactivateConfirmModal.coupled.id);
-            setReactivateConfirmModal({ isOpen: false, coupled: null });
-        }
-    };
-
     const getStatusConfig = (status) => {
         const map = { 'VENCIDO': 'red', 'PROXIMO': 'yellow', 'AL_DIA': 'green' };
         return { color: map[status] || 'green', text: status?.replace('_', ' ') || 'Al día' };
@@ -98,11 +84,12 @@ const Coupled = () => {
                                 <th style={{ width: '50px' }}>Info</th>
                                 <th>Dominio (Patente)</th>
                                 <th>Vencimientos</th>
+                                {showReactivate && <th>Fecha de Archivo</th>}
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {data.map(item => {
+                            {paginated(data).map(item => {
                                 const status = getStatusConfig(item.estado_general);
                                 return (
                                     <tr key={item.id} className={!item.activo ? 'inactive-row' : ''}>
@@ -117,21 +104,28 @@ const Coupled = () => {
                                             <span className={`traffic-light light-${status.color}`}></span>
                                             {status.text}
                                         </td>
+                                        {showReactivate && (
+                                            <td>
+                                                {item.fecha_de_baja ? new Date(item.fecha_de_baja).toLocaleDateString('es-AR') : '-'}
+                                            </td>
+                                        )}
                                         <td>
                                             <button className="action-btn view" title="Ver Detalle" onClick={() => handleOpenDetail(item)}>
                                                 👁️
                                             </button>
-                                            <button className="action-btn edit" title="Editar" onClick={() => handleOpenEdit(item)}>
-                                                ✏️
-                                            </button>
                                             {showReactivate ? (
-                                                <button className="action-btn reactivate" title="Reactivar" onClick={() => handleReactivateClick(item)}>
+                                                <button className="action-btn reactivate" title="Reactivar" onClick={() => reactivateCoupled(item.id)}>
                                                     ♻️
                                                 </button>
                                             ) : (
-                                                <button className="action-btn delete" title="Dar de baja" onClick={() => handleDeleteClick(item)}>
+                                                <>
+                                                    <button className="action-btn edit" title="Editar" onClick={() => handleOpenEdit(item)}>
+                                                        ✏️
+                                                    </button>
+                                                <button className="action-btn delete" title="Archivar" onClick={() => handleDeleteClick(item)}>
                                                     🗑️
                                                 </button>
+                                                </>
                                             )}
                                         </td>
                                     </tr>
@@ -188,7 +182,7 @@ const Coupled = () => {
                         className={`tab-button ${activeTab === 'inactive' ? 'active' : ''}`}
                         onClick={() => setActiveTab('inactive')}
                     >
-                        📦 Inactivos ({inactiveCoupled.length})
+                        📦 Archivados ({inactiveCoupled.length})
                     </button>
                 </div>
                  {/* BUSCADOR */}
@@ -202,16 +196,18 @@ const Coupled = () => {
                 />
             </div>
             <div className="tab-actions-header">
-                <button onClick={handleOpenCreate} className="btn-add-chassis">+ Nuevo Acoplado</button>
+                {activeTab === 'active' && (
+                    <button onClick={handleOpenCreate} className="btn-add-chassis">+ Nuevo Acoplado</button>
+                )}
             </div>
             </div>
            
 
             {!loading ? (
                 activeTab === 'active' ? (
-                    <CoupledTable data={coupled} showReactivate={false} />
+                    <CoupledTable data={filterCoupled(coupled)} showReactivate={false} />
                 ) : (
-                    <CoupledTable data={inactiveCoupled} showReactivate={true} />
+                    <CoupledTable data={filterCoupled(inactiveCoupled)} showReactivate={true} />
                 )
             ) : (
                 <div className="loading-msg">Cargando flota...</div>
@@ -229,27 +225,6 @@ const Coupled = () => {
                 onClose={handleCloseDetail}
                 coupled={viewCoupled}
             />
-
-            {/* MODAL CONFIRMACIÓN REACTIVACIÓN */}
-            {reactivateConfirmModal.isOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content reactivate-modal">
-                        <h2>¿Reactivar Acoplado?</h2>
-                        <p><strong>{reactivateConfirmModal.coupled?.Dominio_acoplado}</strong></p>
-                        <p style={{ marginTop: '15px', fontSize: '0.95rem', color: '#666' }}>
-                            El acoplado volverá a estar disponible para usar en viajes.
-                        </p>
-                        <div className="modal-actions">
-                            <button onClick={() => setReactivateConfirmModal({ isOpen: false, coupled: null })} className="btn-cancel">
-                                Cancelar
-                            </button>
-                            <button onClick={handleConfirmReactivate} className="btn-confirm-reactivate">
-                                ✅ Reactivar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 };

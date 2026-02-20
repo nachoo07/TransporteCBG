@@ -3,8 +3,6 @@ import client from '../../api/axios';
 import { useAuth } from '../../context/login/LoginContext'; // Ajusta la ruta si cambiaste de lugar el AuthContext
 import { showSuccessToast, showErrorAlert, showConfirmAlert } from '../../utils/alerts/Alerts';
 import { getErrorMsg } from '../../utils/helperError/ErrorMsg';
-// Asegúrate que la ruta sea correcta
-import { verificarInfoCompletaChasis } from '../../utils/dataValidationChassis/DataValidationChassis';
 
 export const ChasisContext = createContext();
 
@@ -34,7 +32,7 @@ const ChasisProvider = ({ children }) => {
 
             setChasis(chasisWithInfo);
         } catch (error) {
-            console.error(error);
+            if (error?.isOffline) return;
             const msg = getErrorMsg(error, 'No se pudo cargar la lista de chasis');
             showErrorAlert('Error', msg);
         } finally {
@@ -48,7 +46,7 @@ const ChasisProvider = ({ children }) => {
             const res = await client.get(`/chassis/${id}`);
             return res.data.data || res.data;
         } catch (error) {
-            console.error(error);
+            if (error?.isOffline) return null;
             const msg = getErrorMsg(error, 'No se pudo obtener el chasis');
             showErrorAlert('Error', msg);
             return null;
@@ -68,6 +66,7 @@ const ChasisProvider = ({ children }) => {
             showSuccessToast('¡Chasis creado correctamente!');
             return true;
         } catch (error) {
+            if (error?.isOffline) return false;
             // ❌ ERROR: Usamos el Alert (Swal) para que lea el error
             const serverMsg = getErrorMsg(error, 'No se pudo crear el chasis');
             showErrorAlert('Error', serverMsg);
@@ -94,6 +93,7 @@ const ChasisProvider = ({ children }) => {
             showSuccessToast('Chasis actualizado correctamente.');
             return true;
         } catch (error) {
+            if (error?.isOffline) return false;
             const msg = getErrorMsg(error, 'No se pudo actualizar el chasis');
             showErrorAlert('Error', msg);
             return false;
@@ -102,8 +102,9 @@ const ChasisProvider = ({ children }) => {
 
     const deleteChasis = async (id) => {
         const confirmed = await showConfirmAlert(
-            '¿Dar de baja este Chasis?',
-            'Se marcará como inactivo y no aparecerá en viajes.'
+            '¿Archivar este Chasis?',
+            'El chasis no aparecerá para nuevos viajes, pero se conservará para el historial.',
+            { confirmButtonText: 'Sí, archivar' }
         );
 
         if (!confirmed) return false;
@@ -116,10 +117,11 @@ const ChasisProvider = ({ children }) => {
             await getInactiveChasis();
 
             // ✅ ÉXITO AL DAR DE BAJA: Toast rápido
-            showSuccessToast('Chasis dado de baja exitosamente.')
+            showSuccessToast('Chasis archivado exitosamente.')
             return true;
         } catch (error) {
-            const serverMsg = getErrorMsg(error, 'No se pudo dar de baja el chasis');
+            if (error?.isOffline) return false;
+            const serverMsg = getErrorMsg(error, 'No se pudo archivar el chasis');
             showErrorAlert('Error', serverMsg);
             return false;
         }
@@ -134,7 +136,7 @@ const ChasisProvider = ({ children }) => {
             const chasisWithInfo = Array.isArray(inactiveList) ? inactiveList : [];
             setInactiveChasis(chasisWithInfo);
         } catch (error) {
-            console.error(error);
+            if (error?.isOffline) return;
             const msg = getErrorMsg(error, 'No se pudo cargar los chasis inactivos');
             showErrorAlert('Error', msg);
         }
@@ -154,6 +156,7 @@ const reactivateChasis = async (id) => {
         showSuccessToast('Chasis reactivado exitosamente.');
         return true;
     } catch (error) {
+        if (error?.isOffline) return false;
         const serverMsg = getErrorMsg(error, 'No se pudo reactivar el chasis');
         showErrorAlert('Error', serverMsg);
         return false;

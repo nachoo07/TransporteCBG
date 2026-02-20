@@ -7,9 +7,11 @@ import ProtectedRoute from './protectRouter/ProtectedRoute'
 import PageDriver from '../pages/driver/PageDriver'
 import PageDriverDetail from '../pages/driver/PageDriverDetail'
 import PageChassis from '../pages/chasis/PageChassis'
-import PageAssignment from '../pages/assignment/PageAssignment'
 import PageCompany from '../pages/company/PageCompany'
 import PageTravel from '../pages/travel/PageTravel'
+import PageCompanyPayments from '../pages/companyPayments/PageCompanyPayments'
+import PageDriverPayments from '../pages/driverPayments/PageDriverPayments'
+import PageBilling from '../pages/billing/PageBilling'
 const Routing = () => {
 
   return (
@@ -31,9 +33,12 @@ const Routing = () => {
               <Route path="/choferes" element={<PageDriver />} />
               <Route path="/panel-driver/:id" element={<PageDriverDetail />} />
               <Route path="/chassis" element={<PageChassis/>} />
-              <Route path="/assignments" element={<PageAssignment/>} />
               <Route path="/company" element={<PageCompany/>} />
               <Route path="/travels" element={<PageTravel/>} />
+              <Route path="/facturacion" element={<PageBilling/>} />
+              <Route path="/company-payments" element={<PageCompanyPayments/>} />
+              <Route path="/driver-payments" element={<PageDriverPayments/>} />
+              <Route path="/pagos-choferes" element={<PageDriverPayments/>} />
           </Route>
 
    </Routes>

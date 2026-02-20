@@ -7,11 +7,31 @@ import logger  from '../../utils/pino/logger.js';
  */
 export const getAllCompanies = async (req, res) => {
   try {
-    const companies = await db('empresas').select('*').orderBy('nombre', 'asc');
+    const companies = await db('empresas')
+      .select('*')
+      .where({ activo: true })
+      .orderBy('nombre', 'asc');
     res.status(200).json({ success: true, data: companies });
   } catch (error) {
     logger.error({ error: error.message }, 'Error al obtener empresas');
     res.status(500).json({ success: false, message: 'Error al obtener empresas' });
+  }
+};
+
+/**
+ * GET /company/inactive
+ * Obtener empresas archivadas (inactivas)
+ */
+export const getInactiveCompanies = async (req, res) => {
+  try {
+    const companies = await db('empresas')
+      .select('*')
+      .where({ activo: false })
+      .orderBy('nombre', 'asc');
+    res.status(200).json({ success: true, data: companies });
+  } catch (error) {
+    logger.error({ error: error.message }, 'Error al obtener empresas archivadas');
+    res.status(500).json({ success: false, message: 'Error al obtener empresas archivadas' });
   }
 };
 
@@ -111,10 +131,37 @@ export const deleteCompany = async (req, res) => {
     await db('empresas').where({ id }).update({ activo: false });
 
     logger.info({ event: 'delete_company_success', companyId: id }, 'Empresa desactivada');
-    res.status(200).json({ success: true, message: 'Empresa eliminada exitosamente' });
+    res.status(200).json({ success: true, message: 'Empresa archivada exitosamente' });
 
   } catch (error) {
     logger.error({ error: error.message }, 'Error al eliminar empresa');
     res.status(500).json({ success: false, message: 'Error al eliminar empresa' });
+  }
+};
+
+/**
+ * PUT /company/reactivate/:id
+ * Reactivar empresa (des-archivar)
+ */
+export const reactivateCompany = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const company = await db('empresas').where({ id }).first();
+    if (!company) {
+      return res.status(404).json({ success: false, message: 'Empresa no encontrada' });
+    }
+
+    if (company.activo) {
+      return res.status(400).json({ success: false, message: 'La empresa ya está activa' });
+    }
+
+    await db('empresas').where({ id }).update({ activo: true });
+    const updated = await db('empresas').where({ id }).first();
+
+    logger.info({ event: 'reactivate_company_success', companyId: id }, 'Empresa reactivada');
+    res.status(200).json({ success: true, message: 'Empresa reactivada exitosamente', data: updated });
+  } catch (error) {
+    logger.error({ error: error.message }, 'Error al reactivar empresa');
+    res.status(500).json({ success: false, message: 'Error al reactivar empresa' });
   }
 };

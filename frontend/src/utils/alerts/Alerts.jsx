@@ -26,16 +26,16 @@ export const showErrorAlert = (title, message) => {
 };
 
 // 3. CONFIRMACIÓN (SweetAlert2) - Para Borrar
-export const showConfirmAlert = async (title, text) => {
+export const showConfirmAlert = async (title, text, options = {}) => {
 	const result = await Swal.fire({
 		title: title || '¿Estás seguro?',
 		text: text || "No podrás revertir esta acción.",
-		icon: 'warning',
+		icon: options.icon || 'warning',
 		showCancelButton: true,
-		confirmButtonColor: '#3085d6',
-		cancelButtonColor: '#d33',
-		confirmButtonText: 'Sí, eliminar',
-		cancelButtonText: 'Cancelar'
+		confirmButtonColor: options.confirmButtonColor || '#3085d6',
+		cancelButtonColor: options.cancelButtonColor || '#d33',
+		confirmButtonText: options.confirmButtonText || 'Sí, eliminar',
+		cancelButtonText: options.cancelButtonText || 'Cancelar'
 	});
 
 	return result.isConfirmed; // Retorna true o false

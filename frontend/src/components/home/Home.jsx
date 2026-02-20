@@ -1,34 +1,44 @@
 import React, { useEffect, useMemo } from 'react';
 import Navbar from '../../components/navbar/Navbar';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/login/LoginContext';
 import { useDriver } from '../../context/driver/DriverContext';
 import { useChasis } from '../../context/chasis/ChasisContext';
+import { useCoupled } from '../../context/coupled/CoupledContext';
 import { useTravel } from '../../context/travel/TravelContext';
+import { parseDateOnlyLocal } from '../../utils/date/dateOnly';
 
 import './home.css';
 
 const Home = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
 
-  const { drivers, getDrivers } = useDriver();
-  const { chasis, getChasis } = useChasis();
+  const { drivers, inactiveDrivers, getDrivers, getInactiveDrivers } = useDriver();
+  const { chasis, inactiveChasis, getChasis, getInactiveChasis } = useChasis();
+  const { coupled, inactiveCoupled, getCoupled, getInactiveCoupled } = useCoupled();
   const { travels, getTravels } = useTravel();
 
   useEffect(() => {
     getDrivers();
     getChasis();
+    getCoupled();
     getTravels();
+    getInactiveDrivers?.();
+    getInactiveChasis?.();
+    getInactiveCoupled?.();
   }, []);
 
   // Calculamos algunos datos para "Relleno visual"
-  const activeDrivers = drivers.filter(d => d.activo === '1' || d.activo === 1).length;
-  const activeChassis = chasis.filter(c => c.activo === '1' || c.activo === 1).length;
+  const isActive = (value) => value === '1' || value === 1 || value === true;
+  const activeDrivers = drivers.filter(d => isActive(d.activo)).length;
+  const totalDrivers = drivers.length + (inactiveDrivers?.length || 0);
+  const activeChassis = chasis.filter(c => isActive(c.activo)).length;
+  const totalChassis = chasis.length + (inactiveChasis?.length || 0);
+  const activeCoupled = coupled.filter(a => isActive(a.activo)).length;
+  const totalCoupled = coupled.length + (inactiveCoupled?.length || 0);
 
   // --- LÓGICA DE VENCIMIENTOS (Alertas) ---
   const alerts = useMemo(() => {
-    const today = new Date();
+    const today = parseDateOnlyLocal(new Date()) || new Date();
     const next30Days = new Date();
     next30Days.setDate(today.getDate() + 30);
     
@@ -36,17 +46,19 @@ const Home = () => {
 
     // 1. Revisar Choferes
     drivers.forEach(d => {
-      if (d.activo !== '1') return; // Solo activos
+      if (!isActive(d.activo)) return; // Solo activos
       
       const checkDate = (dateStr, type) => {
         if (!dateStr) return;
-        const date = new Date(dateStr);
+        const date = parseDateOnlyLocal(dateStr);
+        if (!date) return;
         if (date <= next30Days) {
           allAlerts.push({
             type: 'driver',
             name: `${d.nombre} ${d.apellido}`,
             doc: type,
-            date: dateStr,
+            date: date,
+            dateRaw: dateStr,
             isExpired: date < today,
             id: d.id
           });
@@ -61,17 +73,19 @@ const Home = () => {
 
     // 2. Revisar Chasis
     chasis.forEach(c => {
-      if (c.activo !== '1') return;
+      if (!isActive(c.activo)) return;
       
       const checkDate = (dateStr, type) => {
         if (!dateStr) return;
-        const date = new Date(dateStr);
+        const date = parseDateOnlyLocal(dateStr);
+        if (!date) return;
         if (date <= next30Days) {
           allAlerts.push({
             type: 'chassis',
             name: `Móvil ${c.Dominio_chasis}`,
             doc: type,
-            date: dateStr,
+            date: date,
+            dateRaw: dateStr,
             isExpired: date < today,
             id: c.id
           });
@@ -84,9 +98,37 @@ const Home = () => {
       // Agrega aquí más campos si necesitas
     });
 
+    // 3. Revisar Acoplados
+    coupled.forEach(a => {
+      if (!isActive(a.activo)) return;
+
+      const checkDate = (dateStr, type) => {
+        if (!dateStr) return;
+        const date = parseDateOnlyLocal(dateStr);
+        if (!date) return;
+        if (date <= next30Days) {
+          allAlerts.push({
+            type: 'coupled',
+            name: `Acoplado ${a.Dominio_acoplado}`,
+            doc: type,
+            date: date,
+            dateRaw: dateStr,
+            isExpired: date < today,
+            id: a.id
+          });
+        }
+      };
+
+      checkDate(a.vencimiento_vtv_acoplado, 'VTV');
+      checkDate(a.vencimiento_senasa_acoplado, 'SENASA');
+      checkDate(a.vencimiento_cedula_acoplado, 'Cédula');
+      checkDate(a.vencimiento_tipificacion_carga_acoplado, 'Tipificación de Carga');
+      checkDate(a.vencimiento_homologacion_acoplado, 'Homologación');
+    });
+
     // Ordenar: Primero los vencidos, luego por fecha más cercana
-    return allAlerts.sort((a, b) => new Date(a.date) - new Date(b.date));
-  }, [drivers, chasis]);
+    return allAlerts.sort((a, b) => a.date - b.date);
+  }, [drivers, chasis, coupled]);
 
 
   // --- DATOS ESTADÍSTICOS ---
@@ -97,15 +139,12 @@ const Home = () => {
     const currentYear = now.getFullYear();
 
     return travels.filter(t => {
-      // Asumiendo que t.created_at o t.fecha_salida existe. Ajusta 'fecha_salida' a tu campo real.
-      const tDate = new Date(t.fecha_salida || t.created_at || Date.now()); 
+      const parsed = parseDateOnlyLocal(t.fecha_viaje) || (t.created_at ? new Date(t.created_at) : null);
+      if (!parsed || Number.isNaN(parsed.getTime())) return false;
+      const tDate = parsed;
       return tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear;
     }).length;
   }, [travels]);
-
-  // Últimos 5 movimientos (Invertimos array original)
-  const recentActivity = travels.slice().reverse().slice(0, 5);
-
 
   return (
     <div className="dashboard-wrapper">
@@ -137,16 +176,23 @@ const Home = () => {
             <div className="status-bar">
               <div className="label">Choferes Activos</div>
               <div className="progress-bg">
-                <div className="progress-fill" style={{ width: `${(activeDrivers / (drivers.length || 1)) * 100}%` }}></div>
+                <div className="progress-fill" style={{ width: `${(activeDrivers / (totalDrivers || 1)) * 100}%` }}></div>
               </div>
-              <small>{activeDrivers} / {drivers.length}</small>
+              <small>{activeDrivers} / {totalDrivers}</small>
             </div>
             <div className="status-bar">
-              <div className="label">Unidades Operativas</div>
+              <div className="label">Chasis Operativos</div>
               <div className="progress-bg">
-                <div className="progress-fill orange" style={{ width: `${(activeChassis / (chasis.length || 1)) * 100}%` }}></div>
+                <div className="progress-fill orange" style={{ width: `${(activeChassis / (totalChassis || 1)) * 100}%` }}></div>
               </div>
-              <small>{activeChassis} / {chasis.length}</small>
+              <small>{activeChassis} / {totalChassis}</small>
+            </div>
+            <div className="status-bar">
+              <div className="label">Acoplados Operativos</div>
+              <div className="progress-bg">
+                <div className="progress-fill orange" style={{ width: `${(activeCoupled / (totalCoupled || 1)) * 100}%` }}></div>
+              </div>
+              <small>{activeCoupled} / {totalCoupled}</small>
             </div>
           </div>
         </aside>
@@ -202,15 +248,11 @@ const Home = () => {
                   <span className="mb-icon">🔐</span> Usuarios
                 </Link>
                 
-                {/* NUEVOS MÓDULOS (Rutas placeholder) */}
-                <Link to="/facturacion" className="module-btn">
-                  <span className="mb-icon">🧾</span> Facturación
-                </Link>
-                <Link to="/pagos-empresas" className="module-btn">
-                  <span className="mb-icon">💰</span> Pagos Empresas
+                <Link to="/company-payments" className="module-btn">
+                  <span className="mb-icon">🏦</span> Pagos Empresas
                 </Link>
                 <Link to="/pagos-choferes" className="module-btn">
-                  <span className="mb-icon">💸</span> Pagos Choferes
+                  <span className="mb-icon">👨‍✈️</span> Pagos Choferes
                 </Link>
               </div>
             </div>
@@ -229,14 +271,14 @@ const Home = () => {
                     alerts.map((alert, idx) => (
                       <div key={idx} className={`alert-item ${alert.isExpired ? 'expired' : 'warning'}`}>
                         <div className="alert-icon">
-                          {alert.type === 'driver' ? '👮' : '🚛'}
+                          {alert.type === 'driver' ? '👮' : alert.type === 'coupled' ? '🛻' : '🚛'}
                         </div>
-                        <div className="alert-info">
+                        <div className="alert-info-home">
                           <strong>{alert.doc}</strong>
                           <span>{alert.name}</span>
                         </div>
                         <div className="alert-date">
-                          {new Date(alert.date).toLocaleDateString()}
+                          {alert.date instanceof Date ? alert.date.toLocaleDateString('es-AR') : '-'}
                           {alert.isExpired && <span className="tag-expired">Vencido</span>}
                         </div>
                       </div>
@@ -250,30 +292,7 @@ const Home = () => {
               </div>
 
               {/* TARJETA DE ÚLTIMOS MOVIMIENTOS */}
-              <div className="feed-card">
-                <div className="feed-header">
-                  <h3>📝 Últimos Movimientos</h3>
-                </div>
-                <div className="feed-list">
-                  {recentActivity.length > 0 ? (
-                    recentActivity.map((travel, idx) => (
-                      <div key={idx} className="activity-row">
-                        <div className="act-dot"></div>
-                        <div className="act-content">
-                          <strong>Viaje #{travel.id}</strong>
-                          <span>{travel.destino || 'Destino registrado'}</span>
-                        </div>
-                        <span className="act-time">
-                           {/* Ajusta al campo de fecha real */}
-                           {travel.fecha ? new Date(travel.fecha).toLocaleDateString() : 'Hoy'}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="empty-state">Sin actividad reciente</div>
-                  )}
-                </div>
-              </div>
+              
 
             </div>
           </section>

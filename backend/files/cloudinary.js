@@ -33,6 +33,11 @@ const storage = new CloudinaryStorage({
             case 'url_senasa_acoplado':
             case 'url_tipificacion_carga_acoplado':
             case 'url_homologacion_acoplado': folderPath = 'transporte-cbg/flota/acoplados/habilitaciones'; break;
+            case 'invoice_photo': folderPath = 'transporte-cbg/viajes/facturas'; break;
+            case 'archivo_factura_liquidado': folderPath = 'transporte-cbg/viajes/liquidaciones'; break;
+            case 'foto_km_inicio':
+            case 'foto_km_fin': folderPath = 'transporte-cbg/viajes/combustible/kilometraje'; break;
+            case 'foto_factura_combustible': folderPath = 'transporte-cbg/viajes/combustible/facturas'; break;
         }
 
         // 🚨 LA CORRECCIÓN ESTÁ AQUÍ 🚨

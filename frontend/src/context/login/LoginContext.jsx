@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useContext, useRef } from 'react';
 import client from '../../api/axios';
 import Swal from 'sweetalert2';
+import { showErrorAlert } from '../../utils/alerts/Alerts';
 
 export const LoginContext = createContext();
 
@@ -33,11 +34,12 @@ export const LoginProvider = ({ children }) => {
         return;
       }
 
+      setLoading(true);
       try {
         const res = await client.get('/users/perfil');
-        setUser(res.data);
+        setUser(res.data?.usuario || null);
         setIsAuthenticated(true);
-      } catch (error) {
+      } catch {
         setUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -54,7 +56,7 @@ export const LoginProvider = ({ children }) => {
    */
   const login = async (credentials) => {
     if (isOffline) {
-      Swal.fire('Sin conexión', 'No hay conexión a internet', 'warning');
+      showErrorAlert('Sin conexión', 'No hay conexión a internet');
       return;
     }
 
@@ -78,7 +80,7 @@ export const LoginProvider = ({ children }) => {
       if (!isOffline) {
         await client.post('/auth/logout');
       }
-    } catch (_) {
+    } catch {
       // ignorar
     } finally {
       setUser(null);
@@ -95,7 +97,7 @@ export const LoginProvider = ({ children }) => {
     const handleSessionExpired = () => {
       if (!isAuthenticated) return;
       logout();
-      Swal.fire('Sesión expirada', 'Volvé a iniciar sesión', 'warning');
+      showErrorAlert('Sesión expirada', 'Volvé a iniciar sesión');
     };
 
     window.addEventListener('SESSION_EXPIRED', handleSessionExpired);
@@ -106,15 +108,22 @@ export const LoginProvider = ({ children }) => {
    * ONLINE / OFFLINE
    */
   useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
+    const handleOnline = () => {
+      setIsOffline(false);
+      // Si quedó un modal de "Sin conexión" abierto, lo cerramos al reconectar
+      Swal.close();
+    };
     const handleOffline = () => setIsOffline(true);
+    const handleAppOffline = () => setIsOffline(true);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    window.addEventListener('APP_OFFLINE', handleAppOffline);
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('APP_OFFLINE', handleAppOffline);
     };
   }, []);
 

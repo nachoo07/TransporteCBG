@@ -5,10 +5,8 @@ const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit }) => {
     
     // Helper para fechas
     const formatDateForInput = (isoString) => isoString ? isoString.split('T')[0] : '';
-    const today = new Date().toISOString().split('T')[0];
     const initialFormState = {
         Dominio_chasis: '',
-        activo: '1', 
         
         // Vencimientos
         vencimiento_cedula_chasis: '',
@@ -30,7 +28,6 @@ const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit }) => {
             if (chassisToEdit) {
                 setFormData({
                     Dominio_chasis: chassisToEdit.Dominio_chasis || '',
-                    activo: chassisToEdit.activo ? '1' : '0',
                     
                     vencimiento_cedula_chasis: formatDateForInput(chassisToEdit.vencimiento_cedula_chasis),
                     vencimiento_vtv_chasis: formatDateForInput(chassisToEdit.vencimiento_vtv_chasis),
@@ -217,15 +214,6 @@ const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit }) => {
                                 required 
                             />
                         </div>
-                        {chassisToEdit && (
-                            <div className="cfm-group">
-                                <label>Estado en Flota</label>
-                                <select name="activo" className="cfm-input" value={formData.activo} onChange={handleChange}>
-                                    <option value="1">🟢 Operativo</option>
-                                    <option value="0">🔴 Dado de Baja / Vendido</option>
-                                </select>
-                            </div>
-                        )}
                     </div>
 
                     <h4 className="cfm-section-title">Documentación Obligatoria</h4>

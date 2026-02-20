@@ -399,7 +399,7 @@ export const deleteDriver = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Conductor dado de baja exitosamente. (Archivos conservados para historial)'
+            message: 'Conductor archivado exitosamente. (Archivos conservados para historial)'
         });
 
     } catch (error) {

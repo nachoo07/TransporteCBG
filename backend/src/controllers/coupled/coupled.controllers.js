@@ -384,7 +384,7 @@ export const updateCoupled = async (req, res) => {
 export const deleteCoupled = async (req, res) => {
     const { id } = req.params;
     const startTime = Date.now();
-    logger.info(`Dando de baja acoplado con ID: ${id}`);
+    logger.info(`Archivando acoplado con ID: ${id}`);
 
     try {
         const coupledToDelete = await connection('acoplado').where({ id }).first();
@@ -406,11 +406,11 @@ export const deleteCoupled = async (req, res) => {
             event: 'delete_acoplado_success', 
             id, 
             duration: `${duration}ms` 
-        }, 'Acoplado dado de baja correctamente.');
+        }, 'Acoplado archivado correctamente.');
 
         res.status(200).json({
             success: true,
-            message: 'Acoplado dado de baja exitosamente.'
+            message: 'Acoplado archivado exitosamente.'
         });
 
     } catch (error) {
@@ -418,11 +418,11 @@ export const deleteCoupled = async (req, res) => {
             event: 'delete_acoplado_error', 
             id,
             error: error.message 
-        }, 'Error crítico al dar de baja acoplado.');
+        }, 'Error crítico al archivar acoplado.');
         
         res.status(500).json({ 
             success: false, 
-            message: 'Hubo un error al dar de baja el acoplado.' 
+            message: 'Hubo un error al archivar el acoplado.' 
         });
     }
 };

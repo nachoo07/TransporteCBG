@@ -26,7 +26,18 @@ export const refreshAccessToken = async (req, res) => {
         if (!savedToken) {
             logger.warn({ event: 'refresh_invalid_hash' }, 'Token de refresh inválido o reutilizado');
             // Por seguridad, limpiamos la cookie del usuario
-            res.clearCookie('refreshToken');
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/'
+            });
+            res.clearCookie('accessToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/'
+            });
             return res.status(403).json({ success: false, message: 'Sesión inválida.' });
         }
 
@@ -36,7 +47,18 @@ export const refreshAccessToken = async (req, res) => {
             logger.info({ event: 'refresh_expired', userId: savedToken.user_id }, 'Token de refresh vencido');
             // Limpieza: borramos el token vencido
             await connection('refreshTokens').where({ id: savedToken.id }).del();
-            res.clearCookie('refreshToken');
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/'
+            });
+            res.clearCookie('accessToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/'
+            });
             return res.status(403).json({ 
                 success: false, 
                 message: 'Sesión expirada. Por favor inicie sesión nuevamente.' 
@@ -62,7 +84,18 @@ export const refreshAccessToken = async (req, res) => {
             // 1. Borramos el refresh token de la BD para que no sirva más
             await connection('refreshTokens').where({ id: savedToken.id }).del();
             // 2. Limpiamos la cookie
-            res.clearCookie('refreshToken');
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/'
+            });
+            res.clearCookie('accessToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/'
+            });
             
             return res.status(403).json({ 
                 success: false, 
@@ -81,7 +114,7 @@ export const refreshAccessToken = async (req, res) => {
         }
 
         // 5. Rotación: Generamos NUEVOS tokens
-        const payload = { id: user.id, email: user.email };
+        const payload = { userId: user.id };
         
         // Access Token (vida corta)
         const newAccessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' });
@@ -111,11 +144,19 @@ export const refreshAccessToken = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
+        // También actualizamos el accessToken en cookie (el backend autentica por cookie)
+        res.cookie('accessToken', newAccessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 15 * 60 * 1000
+        });
+
         const duration = Date.now() - start;
         logger.info({ event: 'refresh_success', userId: user.id, duration: `${duration}ms` }, 'Sesión renovada correctamente');
 
-        // 7. Retornamos el Access Token para que el frontend lo use en memoria
-        return res.status(200).json({ success: true, accessToken: newAccessToken });
+        return res.status(200).json({ success: true });
 
     } catch (error) {
         logger.error({ event: 'refresh_server_error', error: error.message }, 'Error crítico en refresh token');

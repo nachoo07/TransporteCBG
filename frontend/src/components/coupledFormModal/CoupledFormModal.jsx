@@ -7,7 +7,6 @@ const CoupledFormModal = ({isOpen, onClose, onSubmit, coupledToEdit }) => {
 
             const initialFormState = {
                 Dominio_acoplado: '',
-                activo: '1',
 
                 vencimiento_vtv_acoplado: '',
                 vencimiento_cedula_acoplado: '',
@@ -28,7 +27,6 @@ const CoupledFormModal = ({isOpen, onClose, onSubmit, coupledToEdit }) => {
                   if (coupledToEdit) {
                       setFormData({
                           Dominio_acoplado: coupledToEdit.Dominio_acoplado || '',
-                          activo: coupledToEdit.activo ? '1' : '0',
 
                           vencimiento_cedula_acoplado: formatDateForInput(coupledToEdit.vencimiento_cedula_acoplado),
                           vencimiento_vtv_acoplado: formatDateForInput(coupledToEdit.vencimiento_vtv_acoplado),
@@ -217,15 +215,6 @@ return (
                                 required 
                             />
                         </div>
-                        {coupledToEdit && (
-                            <div className="cfm-group">
-                                <label>Estado en Flota</label>
-                                <select name="activo" className="cfm-input" value={formData.activo} onChange={handleChange}>
-                                    <option value="1">🟢 Operativo</option>
-                                    <option value="0">🔴 Dado de Baja / Vendido</option>
-                                </select>
-                            </div>
-                        )}
                     </div>
 
                     <h4 className="cfm-section-title">Documentación Obligatoria</h4>

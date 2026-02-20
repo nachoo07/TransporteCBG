@@ -1,120 +1,4 @@
-/* --- VARIABLES GLOBALES --- */
-:root {
-    --primary-color: #2563eb;
-    --primary-hover: #1d4ed8;
-    --danger-color: #dc2626;
-    --danger-hover: #b91c1c;
-    --bg-color: #f3f4f6;
-    --white: #ffffff;
-    --text-dark: #1f2937;
-    --text-light: #6b7280;
-    --border-color: #e5e7eb;
-}
-
-body {
-    background-color: var(--bg-color);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-}
-
-/* --- PANEL PRINCIPAL --- */
-.panel-container {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-}
-
-.panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-}
-
-.panel-title h1 {
-    font-size: 1.8rem;
-    color: var(--text-dark);
-    margin: 0;
-}
-
-.panel-title p {
-    color: var(--text-light);
-    margin: 0.2rem 0 0 0;
-}
-
-/* Botón Nuevo Admin */
-.btn-create {
-    background-color: var(--primary-color);
-    color: var(--white);
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
-    transition: background-color 0.2s;
-}
-
-.btn-create:hover {
-    background-color: var(--primary-hover);
-}
-
-.plus-sign {
-    font-size: 1.2rem;
-    line-height: 1;
-}
-
-/* --- ESTILOS DE LA TABLA --- */
-.table-container {
-    background-color: var(--white);
-    border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    border: 1px solid var(--border-color);
-}
-
-.users-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.users-table thead {
-    background-color: #f9fafb;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.users-table th {
-    padding: 1rem 1.5rem;
-    text-align: left;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--text-light);
-    letter-spacing: 0.05em;
-}
-
-.users-table tbody tr {
-    border-bottom: 1px solid var(--border-color);
-    transition: background-color 0.15s;
-}
-
-.users-table tbody tr:last-child {
-    border-bottom: none;
-}
-
-.users-table tbody tr:hover {
-    background-color: #f8fafc;
-}
-
-.users-table td {
-    padding: 1rem 1.5rem;
-    color: var(--text-dark);
-}
-
-/* Avatar y Celdas */
+/* Avatar y celdas (complemento al estilo de Choferes) */
 .user-cell {
     display: flex;
     align-items: center;
@@ -125,7 +9,7 @@ body {
     width: 36px;
     height: 36px;
     background-color: #dbeafe;
-    color: var(--primary-color);
+    color: #2563eb;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -139,7 +23,7 @@ body {
 }
 
 .email-text {
-    color: var(--text-light);
+    color: #6b7280;
     font-size: 0.9rem;
 }
 
@@ -164,11 +48,11 @@ body {
 }
 
 .btn-action.edit:hover {
-    color: var(--primary-color);
+    color: #2563eb;
 }
 
 .btn-action.delete:hover {
-    color: var(--danger-color);
+    color: #dc2626;
 }
 
 .icon-sm {
@@ -179,12 +63,12 @@ body {
 .empty-state {
     text-align: center;
     padding: 2rem;
-    color: var(--text-light);
+    color: #6b7280;
 }
 
 .loading-state {
     text-align: center;
     padding: 3rem;
-    color: var(--primary-color);
+    color: #2563eb;
     font-weight: 500;
 }

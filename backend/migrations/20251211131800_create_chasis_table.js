@@ -24,6 +24,7 @@ export function up(knex) {
         table.date('vencimiento_senasa_chasis').nullable(); // ¡Importante!
         table.date('vencimiento_vtv_chasis').nullable(); // ¡Importante!
         table.date('vencimiento_homologacion_chasis').nullable(); // ¡Importante!
+        table.boolean('activo').notNullable().defaultTo(true);
 
         table.timestamps(true, true);
         

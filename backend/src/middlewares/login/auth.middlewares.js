@@ -22,7 +22,7 @@ export const verifyToken = async (req, res, next) => {
             decoded = jwt.verify(token, process.env.JWT_SECRET);
         } catch (jwtError) {
             logger.warn({ event: 'token_verify_failed', error: jwtError.message }, 'Firma de JWT inválida o expirada');
-            return res.status(403).json({
+            return res.status(401).json({
                 success: false,
                 message: 'Token inválido o expirado.'
             });

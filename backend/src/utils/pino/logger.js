@@ -1,67 +1,44 @@
-// src/utils/logger.js
-import pino from 'pino';
-import fs from 'fs';
-import path from 'path';
+const levelToConsole = {
+  info: 'log',
+  warn: 'warn',
+  error: 'error',
+  debug: 'debug',
+};
 
-// Definimos si estamos en desarrollo
-const isDevelopment = process.env.NODE_ENV !== 'production';
+function log(level, ...args) {
+  const ts = new Date().toISOString();
+  const consoleMethod = levelToConsole[level] ?? 'log';
+  const prefix = `[${ts}] ${String(level).toUpperCase()}:`;
 
-// Array de destinos (a dónde van los logs)
-const targets = [];
-
-// 1. CONFIGURACIÓN PARA DESARROLLO (Tu PC)
-// Solo queremos ver colores en la terminal. No guardamos archivos.
-if (isDevelopment) {
-  targets.push({
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-      translateTime: 'SYS:standard',
-      ignore: 'pid,hostname',
-    },
-  });
-}
-
-// 2. CONFIGURACIÓN PARA PRODUCCIÓN (Servidor / VPS)
-// Aquí SÍ guardamos archivos para auditoría.
-else {
-  // Aseguramos que la carpeta logs exista solo si estamos en producción
-  const logDir = 'logs';
-  if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir);
+  if (args.length === 0) {
+    // eslint-disable-next-line no-console
+    console[consoleMethod](prefix);
+    return;
   }
 
-  targets.push({
-    target: 'pino-roll',
-    options: {
-      file: path.join(logDir, 'app-log'),
-      frequency: 'daily',
-      mkdir: true,
-      extension: '.log',
-      limit: {
-        count: 14, // Guardar solo 2 semanas de historia
-      }
-    },
-  });
+  // Firma estilo pino: logger.warn(obj, 'mensaje')
+  if (
+    args.length >= 2 &&
+    args[0] &&
+    typeof args[0] === 'object' &&
+    typeof args[1] === 'string'
+  ) {
+    // eslint-disable-next-line no-console
+    console[consoleMethod](prefix, args[1], args[0]);
+    return;
+  }
 
-  // Opcional: También imprimir JSON crudo en consola por si usas PM2 o Docker logs
-  targets.push({
-    target: 'pino/file', // Salida estándar básica
-    options: { destination: 1 } // 1 = stdout (consola)
-  });
+  // Firma: logger.info('mensaje') o logger.error(obj)
+  // eslint-disable-next-line no-console
+  console[consoleMethod](prefix, ...args);
 }
 
-// Creamos el transporte final
-const transport = pino.transport({
-  targets: targets,
-});
-
-const logger = pino(
-  {
-    level: isDevelopment ? 'debug' : 'info',
-    timestamp: pino.stdTimeFunctions.isoTime,
-  },
-  transport
-);
+const logger = {
+  info: (...args) => log('info', ...args),
+  warn: (...args) => log('warn', ...args),
+  error: (...args) => log('error', ...args),
+  debug: (...args) => log('debug', ...args),
+};
 
 export default logger;
+

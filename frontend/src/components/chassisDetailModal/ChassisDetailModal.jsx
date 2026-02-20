@@ -64,7 +64,7 @@ const ChassisDetailModal = ({ isOpen, onClose, chassis }) => {
                             <div className="cdm-card">
                                 <label>Estado</label>
                                 <span className={`cdm-status-text ${chassis.activo ? 'active' : 'inactive'}`}>
-                                    {chassis.activo ? 'Activo' : 'Inactivo'}
+                                    {chassis.activo ? 'Activo' : 'Archivado'}
                                 </span>
                             </div>
                         </div>

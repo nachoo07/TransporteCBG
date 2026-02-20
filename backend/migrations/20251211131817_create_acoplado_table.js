@@ -31,8 +31,7 @@ export function up(knex) {
         table.index('activo', 'idx_acoplado_activo');
         
         table.timestamps(true, true);
-        });
-        });
+  });
 }
 
 /**
@@ -42,4 +41,3 @@ export function up(knex) {
 export function down(knex) {
   return knex.schema.dropTable('acoplado');
 }
-

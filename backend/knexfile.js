@@ -17,6 +17,18 @@ export default {
       tableName: 'knex_migrations' // Tabla interna para control de versiones
     }
   },
+  test: {
+    client: 'mysql2',
+    connection: CONNECTION_STRING,
+    pool: {
+      min: 1,
+      max: 5
+    },
+    migrations: {
+      directory: './migrations',
+      tableName: 'knex_migrations'
+    }
+  },
   
   production: {
     client: 'mysql2',

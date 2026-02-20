@@ -1,7 +1,8 @@
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import client from '../../api/axios';
 import { useAuth } from '../../context/login/LoginContext'; // Ajusta la ruta si cambiaste de lugar el AuthContext
-import Swal from 'sweetalert2';
+import { showErrorAlert, showSuccessToast, showConfirmAlert } from '../../utils/alerts/Alerts';
+import { getErrorMsg } from '../../utils/helperError/ErrorMsg';
 
 export const CoupledContext = createContext();
 
@@ -27,8 +28,9 @@ const CoupledProvider = ({ children }) => {
             const coupledList = res.data.data || res.data; 
             setCoupled(Array.isArray(coupledList) ? coupledList : []);
         } catch (error) {
-            console.error(error);
-            Swal.fire('Error', 'No se pudo cargar la lista de acoplados', 'error');
+            if (error?.isOffline) return;
+            const msg = getErrorMsg(error, 'No se pudo cargar la lista de acoplados');
+            showErrorAlert('Error', msg);
         } finally {
             setLoading(false);
         }
@@ -40,21 +42,12 @@ const CoupledProvider = ({ children }) => {
             // Retornamos los datos al componente para que él los muestre
             return res.data.data || res.data;
         } catch (error) {
-            console.error("Error obteniendo acoplado:", error);
-            Swal.fire('Error', 'No se pudo obtener la información del acoplado', 'error');
+            if (error?.isOffline) return null;
+            const msg = getErrorMsg(error, 'No se pudo obtener la información del acoplado');
+            showErrorAlert('Error', msg);
             return null;
         }
     }, []);
-
-    const buildErrorMessage = (error, fallback) => {
-        const apiMsg = error?.response?.data?.message;
-        const apiErrors = error?.response?.data?.errors;
-        if (Array.isArray(apiErrors) && apiErrors.length > 0) {
-            return apiErrors.join('\n');
-        }
-        if (apiMsg) return apiMsg;
-        return fallback;
-    };
 
     const createCoupled = async (coupledData) => {
         try {
@@ -65,12 +58,12 @@ const CoupledProvider = ({ children }) => {
             const created = res.data.data || res.data;
             setCoupled((prev) => [...prev, created]);
 
-            Swal.fire('Éxito', 'Acoplado creado correctamente', 'success');
+            showSuccessToast('¡Acoplado creado correctamente!');
             return true;
         } catch (error) {
-            console.error("Error creando acoplado:", error);
-            const msg = buildErrorMessage(error, 'No se pudo crear el acoplado');
-            Swal.fire('Error', msg, 'error');
+            if (error?.isOffline) return false;
+            const msg = getErrorMsg(error, 'No se pudo crear el acoplado');
+            showErrorAlert('Error', msg);
             return false;
         }
     };
@@ -86,26 +79,23 @@ const CoupledProvider = ({ children }) => {
                     return coupled;
                 })
             );
-            Swal.fire('Éxito', 'Acoplado actualizado correctamente', 'success');
+            showSuccessToast('Acoplado actualizado correctamente.');
             return true;
         } catch (error) {
-            const msg = buildErrorMessage(error, 'No se pudo actualizar el acoplado');
-            Swal.fire('Error', msg, 'error');
+            if (error?.isOffline) return false;
+            const msg = getErrorMsg(error, 'No se pudo actualizar el acoplado');
+            showErrorAlert('Error', msg);
             return false;
         }
     }
 
     const deleteCoupled = async (id) => {
-        const confirmed = await Swal.fire({
-            title: '¿Dar de baja este Acoplado?',
-            text: 'Se marcará como inactivo y no aparecerá en viajes.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, dar de baja',
-            cancelButtonText: 'Cancelar'
-        });
-
-        if (!confirmed.isConfirmed) return false;
+        const confirmed = await showConfirmAlert(
+            '¿Archivar este Acoplado?',
+            'El acoplado no aparecerá para nuevos viajes, pero se conservará para el historial.',
+            { confirmButtonText: 'Sí, archivar' }
+        );
+        if (!confirmed) return false;
         try {
             await client.delete(`/coupled/delete/${id}`);
             setCoupled((prev) => prev.filter((coupled) => coupled.id !== id));
@@ -113,11 +103,12 @@ const CoupledProvider = ({ children }) => {
             // Refrescar la lista de inactivos
             await getInactiveCoupled();
             
-            Swal.fire('Éxito', 'Acoplado dado de baja correctamente', 'success');
+            showSuccessToast('Acoplado archivado correctamente.');
             return true;
         } catch (error) {
-            const msg = error.response?.data?.message || 'No se pudo dar de baja el acoplado';
-            Swal.fire('Error', msg, 'error');
+            if (error?.isOffline) return false;
+            const msg = getErrorMsg(error, 'No se pudo archivar el acoplado');
+            showErrorAlert('Error', msg);
             return false;
         }
     };
@@ -130,33 +121,31 @@ const CoupledProvider = ({ children }) => {
             const inactiveList = res.data.data || res.data;
             setInactiveCoupled(Array.isArray(inactiveList) ? inactiveList : []);
         } catch (error) {
-            console.error(error);
-            Swal.fire('Error', 'No se pudo cargar los acoplados inactivos', 'error');
+            if (error?.isOffline) return;
+            const msg = getErrorMsg(error, 'No se pudo cargar los acoplados inactivos');
+            showErrorAlert('Error', msg);
         }
     }, [isAuthenticated]);
 
     const reactivateCoupled = async (id) => {
-        const confirmed = await Swal.fire({
-            title: '¿Reactivar Acoplado?',
-            text: 'El acoplado volverá a estar disponible para usar en viajes.',
-            icon: 'info',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, reactivar',
-            cancelButtonText: 'Cancelar'
-        });
-
-        if (!confirmed.isConfirmed) return false;
+        const confirmed = await showConfirmAlert(
+            '¿Reactivar Acoplado?',
+            'El acoplado volverá a estar disponible para usar en viajes.',
+            { icon: 'info', confirmButtonText: 'Sí, reactivar' }
+        );
+        if (!confirmed) return false;
         try {
             await client.put(`/coupled/reactivate/${id}`);
 
             setInactiveCoupled((prev) => prev.filter((coupled) => coupled.id !== id));
             await getCoupled(); // Refrescar lista activa
 
-            Swal.fire('Éxito', 'Acoplado reactivado correctamente', 'success');
+            showSuccessToast('Acoplado reactivado correctamente.');
             return true;
         } catch (error) {
-            const msg = error.response?.data?.message || 'No se pudo reactivar el acoplado';
-            Swal.fire('Error', msg, 'error');
+            if (error?.isOffline) return false;
+            const msg = getErrorMsg(error, 'No se pudo reactivar el acoplado');
+            showErrorAlert('Error', msg);
             return false;
         }
     };

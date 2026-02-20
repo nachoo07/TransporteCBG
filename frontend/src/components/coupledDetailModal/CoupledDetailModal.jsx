@@ -59,7 +59,7 @@ const CoupledDetailModal = ({ isOpen, onClose, coupled }) => {
                              <div className="cdm-card">
                                 <label>Estado</label>
                                 <span className={`cdm-status-text ${coupled.activo ? 'active' : 'inactive'}`}>
-                                    {coupled.activo ? 'Activo' : 'Inactivo'}
+                                    {coupled.activo ? 'Activo' : 'Archivado'}
                                 </span>
                             </div>
                         </div>

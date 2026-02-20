@@ -1,4 +1,3 @@
-import AssignmentsProvider from './context/assignment/AssignmentsContext'
 import ChasisProvider from './context/chasis/ChasisContext'
 import CoupledProvider from './context/coupled/CoupledContext'
 import DriverProvider from './context/driver/DriverContext'
@@ -28,13 +27,11 @@ function App() {
           <DriverProvider>
             <ChasisProvider>
               <CoupledProvider>
-                <AssignmentsProvider>
-                  <CompanyProvider>
-                    <TravelProvider>
-                      <AppContent />
-                    </TravelProvider>  
-                  </CompanyProvider>    
-                </AssignmentsProvider>
+                <CompanyProvider>
+                  <TravelProvider>
+                    <AppContent />
+                  </TravelProvider>  
+                </CompanyProvider>
               </CoupledProvider>
             </ChasisProvider>
           </DriverProvider>
@@ -47,21 +44,17 @@ function App() {
 // Nuevo componente para mostrar loader y badge de conexión
 import { useAuth } from './context/login/LoginContext';
 import Spinner from './components/ui/Spinner';
-import { toast } from 'sonner';
 
 function AppContent() {
-  const { loading, connectionStatus } = useAuth();
+  const { loading, isOffline } = useAuth();
   // Loader visual
   if (loading) {
     return <Spinner message="Verificando sesión..." />;
   }
   // Badge visual de conexión
   return <>
-    {connectionStatus === 'offline' && (
+    {isOffline && (
       <div style={{position:'fixed',top:10,right:10,background:'#d9534f',color:'#fff',padding:'6px 16px',borderRadius:8,zIndex:9999,fontWeight:600}}>Sin conexión</div>
-    )}
-    {connectionStatus === 'reconnected' && (
-      <div style={{position:'fixed',top:10,right:10,background:'#5cb85c',color:'#fff',padding:'6px 16px',borderRadius:8,zIndex:9999,fontWeight:600}}>¡Conectado nuevamente!</div>
     )}
     <Routing />
   </>;

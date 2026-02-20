@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import Navbar from '../navbar/Navbar';
 import UserFormModal from '../userFormModal/UserFormModal'; // IMPORTAMOS EL COMPONENTE
 import { useUsers } from '../../context/users/UserContext';
 import './panelUser.css';
+import '../driver/driver.css';
 
 const PanelUsers = () => {
   const { usuarios, loading, deleteUsuario, createUsuario, updateUsuario } = useUsers();
@@ -10,6 +11,10 @@ const PanelUsers = () => {
   // CONTROL DEL MODAL
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null); // null = creando, objeto = editando
+  const [activeTab, setActiveTab] = useState('activos');
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   // Abrir para CREAR
   const handleOpenCreate = () => {
@@ -45,30 +50,89 @@ const PanelUsers = () => {
     }
   };
 
+  const filterUsers = useCallback((arr) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return arr;
+    return arr.filter((u) => {
+      const fullName = `${u.nombre || ''} ${u.apellido || ''}`.toLowerCase();
+      const email = (u.email || '').toLowerCase();
+      return fullName.includes(q) || email.includes(q);
+    });
+  }, [search]);
+
+  const paginated = (arr) => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return arr.slice(start, start + itemsPerPage);
+  };
+
+  const activeUsers = useMemo(
+    () => filterUsers((usuarios || []).filter((u) => !!u.activo)),
+    [usuarios, filterUsers]
+  );
+  const inactiveUsers = useMemo(
+    () => filterUsers((usuarios || []).filter((u) => !u.activo)),
+    [usuarios, filterUsers]
+  );
+
+  const baseList = activeTab === 'activos' ? activeUsers : inactiveUsers;
+  const totalPages = Math.ceil(baseList.length / itemsPerPage);
+
+  React.useEffect(() => { setCurrentPage(1); }, [activeTab, search]);
+
   return (
-    <div className="layout-wrapper">
+    <div className="driver-layout">
       <Navbar />
 
-      <div className="panel-container">
+      <div className="driver-container">
         
         {/* CABECERA */}
-        <div className="panel-header">
-          <div className="panel-title">
-            <h1>Usuarios</h1>
-            <p>Gestión de acceso al sistema</p>
+        <div className="driver-header">
+          <div className="driver-title">
+            <h1>🔐 Usuarios</h1>
           </div>
-          <button onClick={handleOpenCreate} className="btn-create">
-            <span className="plus-sign">+</span> Nuevo Usuario
-          </button>
         </div>
 
         {/* LOADING */}
-        {loading && <div className="loading-state">Cargando administradores...</div>}
+        {loading && <div className="loading-state">Cargando usuarios...</div>}
 
         {/* TABLA */}
         {!loading && (
-          <div className="table-container">
-            <table className="users-table">
+          <>
+          <div className="driver-tabs">
+            <div>
+              <button
+                className={`tab-btn ${activeTab === 'activos' ? 'active' : ''}`}
+                onClick={() => setActiveTab('activos')}
+              >
+                👤 Activos ({activeUsers.length})
+              </button>
+              <button
+                className={`tab-btn ${activeTab === 'inactivos' ? 'active' : ''}`}
+                onClick={() => setActiveTab('inactivos')}
+              >
+                📦 Inactivos ({inactiveUsers.length})
+              </button>
+            </div>
+
+            <div>
+              <input
+                type="text"
+                className="driver-search-input"
+                placeholder="Buscar por nombre o usuario..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
+            <div className="driver-header-actions">
+              <button onClick={handleOpenCreate} className="btn-add-driver subtle">
+                ➕ Nuevo Usuario
+              </button>
+            </div>
+          </div>
+
+          <div className="driver-table-wrapper">
+            <table className="driver-table">
               <thead>
                 <tr>
                   <th>Nombre Completo</th>
@@ -78,8 +142,8 @@ const PanelUsers = () => {
                 </tr>
               </thead>
               <tbody>
-                {usuarios.length > 0 ? (
-                  usuarios.map((user) => (
+                {baseList.length > 0 ? (
+                  paginated(baseList).map((user) => (
                     <tr key={user.id}>
                       <td>
                         <div className="user-cell">
@@ -94,9 +158,9 @@ const PanelUsers = () => {
                       </span></td>
                       <td>
                         {user.activo ? (
-                          <span className="status-badge active">Activo</span>
+                          <span className="status-badge status-active">Activo</span>
                         ) : (
-                          <span className="status-badge inactive">Inactivo</span>
+                          <span className="status-badge status-inactive">Inactivo</span>
                         )}
                       </td>
                       <td>
@@ -119,7 +183,7 @@ const PanelUsers = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="3" className="empty-state">
+                    <td colSpan="4" className="empty-state">
                       No hay usuarios registrados aún.
                     </td>
                   </tr>
@@ -127,6 +191,34 @@ const PanelUsers = () => {
               </tbody>
             </table>
           </div>
+          {totalPages > 1 && (
+            <div className="driver-pagination">
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                &lt;
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i + 1}
+                  className={`pagination-btn${currentPage === i + 1 ? ' active' : ''}`}
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                &gt;
+              </button>
+            </div>
+          )}
+          </>
         )}
       </div>
 

@@ -41,8 +41,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #FF9020;
+  color: #1f2937;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -54,7 +54,7 @@
 
 .btn-add-company:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 144, 32, 0.35);
 }
 
 .btn-add-company span {
@@ -65,9 +65,9 @@
 /* --- TABLA --- */
 .company-table-wrapper {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  overflow-x: auto;
 }
 
 .company-table {
@@ -77,19 +77,22 @@
 }
 
 .company-table thead {
-  background-color: #f8f9fa;
-  border-bottom: 2px solid #e9ecef;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .company-table th {
   padding: 1rem;
   text-align: left;
-  font-weight: 600;
-  color: #495057;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #6b7280;
+  letter-spacing: 0.05em;
+  font-weight: 700;
 }
 
 .company-table tbody tr {
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid #e5e7eb;
   transition: background-color 0.2s ease;
 }
 
@@ -157,13 +160,102 @@
 }
 
 .btn-icon.edit-icon:hover:not(:disabled) {
-  background-color: #3498db;
+  background-color: #2563eb;
   color: white;
 }
 
 .btn-icon.delete-icon:hover:not(:disabled) {
   background-color: #e74c3c;
   color: white;
+}
+
+/* --- REUSO DEL LOOK & FEEL (como Choferes) --- */
+.driver-tabs {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-btn.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+.driver-search-input {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  width: 350px;
+}
+
+.driver-search-input:focus {
+  outline: none;
+  border-color: #FF9020;
+  box-shadow: 0 0 0 2px rgba(255, 144, 32, 0.3);
+}
+
+.driver-header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.btn-add-company.subtle {
+  background: #FF9020;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-add-company.subtle:hover {
+  background: #f79a3e;
+}
+
+/* PAGINACIÓN (mismo estilo que Choferes) */
+.driver-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 1.5rem 0 0.5rem 0;
+}
+
+.pagination-btn {
+  background: #fff;
+  color: #FF9020;
+  border: 1.5px solid #f59e0b;
+  border-radius: 999px;
+  padding: 0.45rem 1.1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 2px;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+}
+
+.pagination-btn.active,
+.pagination-btn:hover:not(:disabled) {
+  background: #FF9020;
+  color: #fff;
+  border-color: #f59e0b;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* --- MODAL --- */
@@ -275,8 +367,8 @@
 .company-input:focus,
 .company-select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #FF9020;
+  box-shadow: 0 0 0 3px rgba(255, 144, 32, 0.18);
 }
 
 .company-input.error,
@@ -315,7 +407,7 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #667eea;
+  accent-color: #FF9020;
 }
 
 /* --- BOTONES FORMULARIO --- */
@@ -342,13 +434,13 @@
 }
 
 .company-btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #FF9020;
+  color: #1f2937;
 }
 
 .company-btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 144, 32, 0.35);
 }
 
 .company-btn-secondary {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/login/LoginContext'; // Ajusta la ruta si es necesario
 import Swal from 'sweetalert2';
@@ -49,16 +49,15 @@ const NavigationBar = () => {
           
           {/* ENLACES CENTRALES */}
           <Nav className="me-auto my-2 my-lg-0 navbar-links-container ">
+            <Nav.Link as={Link} to="/panel-user">Usuarios</Nav.Link>
             <Nav.Link as={Link} to="/panel-driver">Choferes</Nav.Link>
             <Nav.Link as={Link} to="/chassis">Flota</Nav.Link>
             <Nav.Link as={Link} to="/company">Empresas</Nav.Link>
             <Nav.Link as={Link} to="/travels">Viajes</Nav.Link>
-            <Nav.Link as={Link} to="/panel-user">Usuarios</Nav.Link>
-
             {/* TU DROPDOWN DE EJEMPLO */}
             <NavDropdown title="Facturacion" id="basic-nav-dropdown">
-              <NavDropdown.Item href="#action/3.1">Pagos de Empresa</NavDropdown.Item>
-              <NavDropdown.Item href="#action/3.2">Pagos de Choferes</NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/company-payments">Pagos de Empresa</NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/driver-payments">Pagos de Choferes</NavDropdown.Item>
             </NavDropdown>
           </Nav>
 

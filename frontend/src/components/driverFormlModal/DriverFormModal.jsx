@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { showErrorAlert } from '../../utils/alerts/Alerts';
 import './driverFormModal.css';
 
-const DriverFormModal = ({ isOpen, onClose, onSubmit, driverToEdit, isSaving }) => {
+  const DriverFormModal = ({ isOpen, onClose, onSubmit, driverToEdit, isSaving }) => {
 
     // ... (Tu helper de fechas sigue igual) ...
     const formatDateForInput = (isoString) => isoString ? isoString.split('T')[0] : '';
 
-    // Fecha mínima para inputs date (hoy) — evita seleccionar fechas pasadas
-    const today = new Date().toISOString().split('T')[0];
     const initialFormState = {
         nombre: '', apellido: '', dni: '', activo: '1',
         fecha_de_alta: new Date().toISOString().split('T')[0], fecha_de_baja: '',
@@ -55,17 +52,6 @@ const DriverFormModal = ({ isOpen, onClose, onSubmit, driverToEdit, isSaving }) 
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleStatusChange = (e) => {
-        const value = e.target.value; // '1' (Activo) o '0' (Inactivo)
-
-        setFormData(prev => ({
-            ...prev,
-            activo: value,
-            // LOGICA: Si pasa a Activo ('1'), borramos la fecha de baja. 
-            // Si pasa a Inactivo, la dejamos como estaba (o vacía si no había).
-            fecha_de_baja: value === '1' ? '' : prev.fecha_de_baja
-        }));
-    };
     // --- MANEJO DE ARCHIVOS ---
 
     const handleFileSelect = (name, e) => {
@@ -91,15 +77,6 @@ const DriverFormModal = ({ isOpen, onClose, onSubmit, driverToEdit, isSaving }) 
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // 2. VALIDACIÓN BLOQUEANTE 🛑
-        // Si está INACTIVO ('0') y NO tiene fecha de baja...
-        if (formData.activo === '0' && !formData.fecha_de_baja) {
-            showErrorAlert(
-                'Faltan datos',
-                'Si el chofer está INACTIVO, es obligatorio indicar la Fecha de Baja.'
-            );
-            return; // Detenemos el guardado aquí. No se cierra el modal.
-        }
         const dataToSend = new FormData();
 
         // Datos texto
@@ -249,45 +226,6 @@ const DriverFormModal = ({ isOpen, onClose, onSubmit, driverToEdit, isSaving }) 
                         </div>
                         <FileControl label="Foto DNI" inputName="archivo_dni" currentUrl={driverToEdit?.url_dni} />
                     </div>
-                    {driverToEdit && (
-                        <div className="dfm-admin-zone">
-                            <h4 style={{ color: '#dc2626', marginBottom: '0.5rem' }}>Zona Administrativa</h4>
-                            <div className="dfm-row-admin">
-                                <div className="dfm-group">
-                                    <label>Estado</label>
-                                    <select
-                                        name="activo"
-                                        className="dfm-input"
-                                        value={formData.activo}
-                                        onChange={handleStatusChange} // <--- USAMOS EL NUEVO HANDLER
-                                    >
-                                        <option value="1">🟢 Activo</option>
-                                        <option value="0">🔴 Inactivo / De Baja</option>
-                                    </select>
-                                </div>
-
-                                <div className="dfm-group">
-                                    <label>Fecha de Baja {formData.activo === '0' && '*'}</label>
-                                    <input
-                                        type="date"
-                                        name="fecha_de_baja"
-                                        className="dfm-input"
-                                        value={formData.fecha_de_baja}
-                                        onChange={handleChange}
-                                        // TRUCO VISUAL:
-                                        // Si está activo, deshabilitamos el input para que no se confunda.
-                                        disabled={formData.activo === '1'}
-                                        // Si está inactivo, lo hacemos required visualmente
-                                        required={formData.activo === '0'}
-                                        style={{
-                                            backgroundColor: formData.activo === '1' ? '#e5e7eb' : 'white',
-                                            cursor: formData.activo === '1' ? 'not-allowed' : 'text'
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     <h4 className="dfm-section-title">Documentación</h4>
                     

@@ -124,7 +124,18 @@ export const logoutUser = async (req, res) => {
 
     // Validación: Si no hay cookie, quizás ya se deslogueó antes
     if (!refreshToken) {
-        res.clearCookie('refreshToken');
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/'
+        });
+        res.clearCookie('accessToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/'
+        });
         return res.status(200).json({ success: true, message: 'Sesión cerrada.' });
     }
 

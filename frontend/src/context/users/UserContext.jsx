@@ -13,7 +13,7 @@ export const useUsers = () => {
 };
 
 export const UsersProvider = ({ children }) => {
-    const { user, isAuthenticated } = useAuth(); // Solo necesitamos saber si está logueado
+    const { isAuthenticated } = useAuth();
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -27,7 +27,7 @@ export const UsersProvider = ({ children }) => {
             const usersList = res.data?.data ?? res.data;
             setUsuarios(Array.isArray(usersList) ? usersList : []);
         } catch (error) {
-            console.error(error);
+            if (error?.isOffline) return;
             const msg = getErrorMsg(error, 'No se pudo cargar la lista de usuarios');
             showErrorAlert('Error de Carga', msg);
         } finally {
@@ -44,6 +44,7 @@ export const UsersProvider = ({ children }) => {
             showSuccessToast('¡Nuevo usuario creado!');
             return true;
         } catch (error) {
+            if (error?.isOffline) return false;
             const msg = getErrorMsg(error, 'Error al crear usuario');
             showErrorAlert('Error', msg);
             return false;
@@ -62,6 +63,7 @@ export const UsersProvider = ({ children }) => {
             showSuccessToast('¡Usuario actualizado!');
             return true;
         } catch (error) {
+            if (error?.isOffline) return false;
             const msg = getErrorMsg(error, 'Error al actualizar usuario');
             showErrorAlert('Error', msg);
             return false;
@@ -78,6 +80,7 @@ export const UsersProvider = ({ children }) => {
                 setUsuarios((prev) => Array.isArray(prev) ? prev.filter(u => u.id !== id) : []);
                 showSuccessToast('¡Usuario eliminado!');
             } catch (error) {
+                if (error?.isOffline) return;
                 const msg = error.response?.data?.message || 'Error al eliminar';
                 showErrorAlert('Error', msg);
             }

@@ -182,7 +182,7 @@
 
 .modules-grid-buttons {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
 }
 
@@ -275,9 +275,9 @@
 .alert-item.expired { background: #fef2f2; border-left: 3px solid var(--danger); }
 .alert-item.warning { background: #fffbeb; border-left: 3px solid var(--warning); }
 
-.alert-info { flex: 1; }
-.alert-info strong { display: block; color: var(--text-dark); }
-.alert-info span { font-size: 0.8rem; color: var(--text-gray); }
+.alert-info-home { flex: 1; }
+.alert-info-home strong { display: block; color: var(--text-dark); }
+.alert-info-home span { font-size: 0.8rem; color: var(--text-gray); }
 
 .alert-date {
   font-size: 0.75rem;

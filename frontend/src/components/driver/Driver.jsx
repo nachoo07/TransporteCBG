@@ -10,7 +10,6 @@ const Driver = () => {
   const {
     drivers,
     inactiveDrivers,
-    loading,
     createDriver,
     updateDriver,
     deleteDriver,
@@ -21,12 +20,11 @@ const Driver = () => {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState(null);
-  const [isLoadingDriver, setIsLoadingDriver] = useState(false);
   const [activeTab, setActiveTab] = useState('activos');
   // Buscador y paginación
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = 5;
   const [isSaving, setIsSaving] = useState(false);
 
   const handleOpenCreate = () => {
@@ -35,14 +33,9 @@ const Driver = () => {
   };
 
   const handleOpenEdit = async (partialDriver) => {
-    setIsLoadingDriver(true);
-    try {
-      const res = await client.get(`/drivers/${partialDriver.id}`);
-      setSelectedDriver(res.data.data || res.data);
-      setIsFormOpen(true);
-    } finally {
-      setIsLoadingDriver(false);
-    }
+    const res = await client.get(`/drivers/${partialDriver.id}`);
+    setSelectedDriver(res.data.data || res.data);
+    setIsFormOpen(true);
   };
 
   const handleSave = async (formData) => {
@@ -115,7 +108,7 @@ const Driver = () => {
               className={`tab-btn ${activeTab === 'inactivos' ? 'active' : ''}`}
               onClick={() => setActiveTab('inactivos')}
             >
-              📦 Inactivos {inactiveDrivers.length}
+              📦 Archivados {inactiveDrivers.length}
             </button>
           </div>
           {/* BUSCADOR */}
@@ -145,7 +138,6 @@ const Driver = () => {
                 <thead>
                   <tr>
                     <th>Chofer</th>
-                    <th>Estado</th>
                     <th>Documentación</th>
                     <th style={{ textAlign: 'center' }}>Info</th>
                     <th style={{ textAlign: 'center' }}>Acciones</th>
@@ -162,9 +154,7 @@ const Driver = () => {
                             <small>Dni {drv.dni}</small>
                           </div>
                         </td>
-                        <td>
-                          <span className={`status-badge ${drv.activo ? 'status-active' : 'status-inactive'}`}>{drv.activo ? 'Activo' : 'Inactivo'}</span>
-                        </td>
+                        
                         <td>
                           <span className={`traffic-light light-${config.color}`} />
                           <span className="status-text">{config.text}</span>
@@ -234,7 +224,8 @@ const Driver = () => {
                 <thead>
                   <tr>
                     <th>Chofer</th>
-                    <th>Fecha de Baja</th>
+                    <th>Estado</th>
+                    <th>Fecha de Archivo</th>
                     <th style={{ textAlign: 'center' }}>Acciones</th>
                   </tr>
                 </thead>
@@ -242,23 +233,31 @@ const Driver = () => {
                   {paginated(inactiveList).map(drv => (
                     <tr key={drv.id} className="inactive-row">
                       <td><strong>{drv.nombre?.charAt(0).toUpperCase() + drv.nombre?.slice(1)} {drv.apellido?.charAt(0).toUpperCase() + drv.apellido?.slice(1)}</strong></td>
+                      <td>
+                        <span className="status-badge status-inactive">Archivado</span>
+                      </td>
                       <td>{drv.fecha_de_baja ? new Date(drv.fecha_de_baja).toLocaleDateString('es-AR') : '-'}</td>
                       <td style={{ textAlign: 'center' }}>
-                        <button
-                          onClick={async () => {
-                            const confirmed = await import('../../utils/alerts/Alerts')
-                              .then(m => m.showConfirmAlert(
-                                '¿Reactivar chofer?',
-                                `El chofer ${drv.nombre?.charAt(0).toUpperCase() + drv.nombre?.slice(1)} ${drv.apellido?.charAt(0).toUpperCase() + drv.apellido?.slice(1)} volverá a estar activo.`
-                              ));
-                            if (confirmed) {
-                              await reactivateDriver(drv.id);
-                            }
-                          }}
-                          className="btn-icon-reset"
-                        >
-                          ♻️
-                        </button>
+                        <div className="action-buttons" style={{ justifyContent: 'center' }}>
+                          <button onClick={() => navigate(`/panel-driver/${drv.id}`)} className="btn-icon view-icon" title="Ver">👁️</button>
+                          <button
+                            onClick={async () => {
+                              const confirmed = await import('../../utils/alerts/Alerts')
+                                .then(m => m.showConfirmAlert(
+                                  '¿Reactivar chofer?',
+                                  `El chofer ${drv.nombre?.charAt(0).toUpperCase() + drv.nombre?.slice(1)} ${drv.apellido?.charAt(0).toUpperCase() + drv.apellido?.slice(1)} volverá a estar activo.`,
+                                  { icon: 'info', confirmButtonText: 'Sí, reactivar' }
+                                ));
+                              if (confirmed) {
+                                await reactivateDriver(drv.id);
+                              }
+                            }}
+                            className="btn-icon edit-icon"
+                            title="Reactivar"
+                          >
+                            ♻️
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -267,27 +266,30 @@ const Driver = () => {
             </div>
             {/* PAGINACIÓN */}
             {totalPages > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'center', margin: '1.5rem 0' }}>
-                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} style={{ marginRight: 8 }}>&lt;</button>
+              <div className="driver-pagination">
+                <button
+                  className="pagination-btn"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  &lt;
+                </button>
                 {Array.from({ length: totalPages }, (_, i) => (
                   <button
                     key={i + 1}
+                    className={`pagination-btn${currentPage === i + 1 ? ' active' : ''}`}
                     onClick={() => setCurrentPage(i + 1)}
-                    style={{
-                      margin: '0 2px',
-                      fontWeight: currentPage === i + 1 ? 'bold' : 'normal',
-                      background: currentPage === i + 1 ? '#2563eb' : '#fff',
-                      color: currentPage === i + 1 ? '#fff' : '#2563eb',
-                      border: '1px solid #2563eb',
-                      borderRadius: 6,
-                      padding: '0.3rem 0.8rem',
-                      cursor: 'pointer'
-                    }}
                   >
                     {i + 1}
                   </button>
                 ))}
-                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} style={{ marginLeft: 8 }}>&gt;</button>
+                <button
+                  className="pagination-btn"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  &gt;
+                </button>
               </div>
             )}
           </>

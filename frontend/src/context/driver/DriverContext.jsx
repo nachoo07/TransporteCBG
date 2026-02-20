@@ -31,7 +31,7 @@ export const DriverProvider = ({ children }) => {
             setDrivers(Array.isArray(driversList) ? driversList : []);
             
         } catch (error) {
-            console.error(error);
+            if (error?.isOffline) return;
             const msg = getErrorMsg(error, 'No se pudo cargar la lista de choferes');
             showErrorAlert('Error', msg);
         } finally {
@@ -50,7 +50,9 @@ export const DriverProvider = ({ children }) => {
             setInactiveDrivers(Array.isArray(inactiveList) ? inactiveList : []);
             
         } catch (error) {
-            console.error(error);
+            if (error?.isOffline) return;
+            const msg = getErrorMsg(error, 'No se pudo cargar la lista de choferes inactivos');
+            showErrorAlert('Error', msg);
         }
     }, [isAuthenticated]);
 
@@ -60,6 +62,7 @@ export const DriverProvider = ({ children }) => {
             const res = await client.get(`/drivers/${id}`);
             return res.data.data || res.data;
         } catch (error) {
+            if (error?.isOffline) return null;
             const msg = getErrorMsg(error, 'No se pudo obtener el chofer');
             showErrorAlert('Error', msg);
             return null;
@@ -76,6 +79,7 @@ export const DriverProvider = ({ children }) => {
             showSuccessToast('¡Chofer registrado correctamente!');
             return true;
         } catch (error) {
+            if (error?.isOffline) return false;
             const msg = getErrorMsg(error, 'Error al crear chofer');
             showErrorAlert('Error', msg);
             return false;
@@ -98,6 +102,7 @@ export const DriverProvider = ({ children }) => {
             showSuccessToast('¡Chofer actualizado correctamente!');
             return true;
         } catch (error) {
+            if (error?.isOffline) return false;
             const msg = getErrorMsg(error, 'Error al actualizar chofer');
             showErrorAlert('Error', msg);
             return false;
@@ -105,7 +110,11 @@ export const DriverProvider = ({ children }) => {
     };
 
     const deleteDriver = async (id) => {
-        const isConfirmed = await showConfirmAlert('¿Eliminar chofer?', 'Se borrarán sus archivos y datos permanentemente.');
+        const isConfirmed = await showConfirmAlert(
+            '¿Archivar chofer?',
+            'El chofer no aparecerá para nuevas operaciones, pero se conservará para el historial.',
+            { confirmButtonText: 'Sí, archivar' }
+        );
         if (isConfirmed) {
             try {
                 await client.delete(`/drivers/delete/${id}`);
@@ -127,9 +136,10 @@ export const DriverProvider = ({ children }) => {
                   ];
                 });
 
-                showSuccessToast('¡Chofer eliminado!');
+                showSuccessToast('¡Chofer archivado!');
                 return true;
             } catch (error) {
+                if (error?.isOffline) return false;
                 const msg = getErrorMsg(error, 'Error al eliminar');
                 showErrorAlert('Error', msg);
                 return false;
@@ -139,9 +149,9 @@ export const DriverProvider = ({ children }) => {
     };
 
     // --- REACTIVAR CHOFER ---
-    const reactivateDriver = async (id) => {
+const reactivateDriver = async (id) => {
         try {
-            const res = await client.put(`/drivers/reactivate/${id}`);
+            await client.put(`/drivers/reactivate/${id}`);
             
             // Eliminar del listado de inactivos
             setInactiveDrivers(prev => prev.filter(d => d.id !== id));
@@ -154,6 +164,7 @@ export const DriverProvider = ({ children }) => {
             showSuccessToast('¡Chofer reactivado correctamente!');
             return true;
         } catch (error) {
+            if (error?.isOffline) return false;
             const msg = getErrorMsg(error, 'Error al reactivar chofer');
             showErrorAlert('Error', msg);
             return false;

@@ -1,0 +1,209 @@
+.driver-payments-layout {
+  min-height: 100vh;
+  background-color: #f3f4f6;
+}
+
+.driver-payments-container {
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.driver-payments-header {
+  margin-bottom: 1.5rem;
+}
+
+.driver-payments-header h1 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 2.2rem;
+  color: #1f2937;
+  font-weight: 800;
+}
+
+.driver-payments-header p {
+  margin: 6px 0 0 0;
+  color: #666;
+  font-size: 1.05rem;
+}
+
+.driver-payments-period-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 0.25rem 0;
+}
+
+.driver-payments-period-title {
+  font-weight: 800 !important;
+  color: #111827;
+  background-color: #FF9020;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 1.3rem !important;
+}
+
+.driver-payments-period-select .MuiOutlinedInput-notchedOutline {
+  border-color: #d1d5db;
+}
+
+.driver-payments-period-select:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #f59e0b;
+}
+
+.driver-payments-period-select.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #FF9020;
+}
+
+.driver-payments-modal-paper {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.driver-payments-modal-title {
+  background: #FF9020;
+  color: #111827;
+  font-weight: 800 !important;
+}
+
+.driver-payments-modal-actions {
+  padding: 12px 20px 16px !important;
+}
+
+.driver-payments-modal-actions .MuiButton-contained {
+  background: #FF9020;
+}
+
+.driver-payments-modal-actions .MuiButton-contained:hover {
+  background: #f79a3e;
+}
+
+.driver-payments-totals {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+}
+
+.driver-payments-totals-table {
+  color: #374151;
+  font-weight: 800 !important;
+}
+
+.driver-payments-totals-selected {
+  color: #FF9020;
+  font-weight: 900 !important;
+}
+
+.driver-adjust-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 16px !important;
+  background: linear-gradient(180deg, #fff9f2 0%, #ffffff 45%);
+}
+
+.driver-adjust-form-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  padding: 10px;
+  background: #fff;
+}
+
+.driver-adjust-desc-input {
+  min-width: 260px;
+  flex: 1 1 260px;
+}
+
+.driver-adjust-type-input {
+  min-width: 140px;
+}
+
+.driver-adjust-amount-input {
+  min-width: 160px;
+  max-width: 220px;
+}
+
+.driver-adjust-add-btn {
+  white-space: nowrap;
+  background: #FF9020 !important;
+}
+
+.driver-adjust-add-btn:hover {
+  background: #f79a3e !important;
+}
+
+.driver-adjust-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.driver-adjust-empty {
+  color: #6b7280;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f9fafb;
+}
+
+.driver-adjust-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.driver-adjust-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.driver-adjust-item-positive {
+  color: #166534;
+  font-weight: 700;
+}
+
+.driver-adjust-item-negative {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.driver-adjust-delete-btn {
+  border-color: #ef4444 !important;
+}
+
+@media (max-width: 900px) {
+  .driver-payments-container {
+    margin-top: 1rem;
+    padding: 0 0.75rem;
+  }
+
+  .driver-payments-header h1 {
+    font-size: 1.7rem;
+  }
+
+  .driver-adjust-form-row {
+    align-items: stretch;
+  }
+
+  .driver-adjust-type-input,
+  .driver-adjust-amount-input,
+  .driver-adjust-add-btn {
+    width: 100%;
+    max-width: none;
+  }
+}

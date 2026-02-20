@@ -5,7 +5,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -17,10 +17,10 @@
 
 .travel-modal-content {
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   width: 100%;
-  max-width: 900px;
+  max-width: 1050px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -34,15 +34,15 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  border-bottom: 2px solid #e0e0e0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 16px 16px 0 0;
+  border-bottom: 1px solid #e5e7eb;
+  background: #FF9020;
+  border-radius: 12px 12px 0 0;
 }
 
 .travel-modal-header h2 {
   margin: 0;
-  color: white;
-  font-size: 1.8rem;
+  color: #1f2937;
+  font-size: 1.5rem;
   font-weight: 700;
 }
 
@@ -50,7 +50,7 @@
   background: none;
   border: none;
   font-size: 2rem;
-  color: white;
+  color: #1f2937;
   cursor: pointer;
   padding: 0;
   width: 40px;
@@ -63,13 +63,13 @@
 }
 
 .travel-modal-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: rotate(90deg);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 /* Tabs */
 .travel-modal-tabs {
   display: flex;
+  justify-content: space-between;
   gap: 0.5rem;
   padding: 1rem 2rem 0;
   background: #f8f9fa;
@@ -91,13 +91,13 @@
 }
 
 .tab-btn:hover {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
+  background: rgba(255, 144, 32, 0.12);
+  color: #FF9020;
 }
 
 .tab-btn.active {
   background: white;
-  color: #667eea;
+  color: #FF9020;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
@@ -113,20 +113,29 @@
   animation: fadeIn 0.3s ease-out;
 }
 
-.form-section {
-  margin-bottom: 2rem;
-}
-
 .form-section h3 {
-  color: #667eea;
+  color: #4b5563;
   font-size: 1.3rem;
   margin: 0 0 1.5rem 0;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 2px solid #f59e0b;
 }
+.form-row { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr 1fr; 
+    gap: 1rem; 
+}
+
+.form-row-1 { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr 1fr; 
+    gap: 1rem; 
+}
+
 
 .form-group {
   margin-bottom: 1.5rem;
+  grid-template-columns: 1fr 1fr 1fr;
 }
 
 .form-group label {
@@ -149,12 +158,17 @@
   font-family: inherit;
 }
 
+.form-group input[type="text"],
+.form-group textarea {
+  text-transform: capitalize;
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #fb923c;
+  box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.15);
 }
 
 .form-group textarea {
@@ -168,12 +182,7 @@
   gap: 1.5rem;
 }
 
-.form-help {
-  display: block;
-  margin-top: 0.3rem;
-  color: #666;
-  font-size: 0.85rem;
-}
+
 
 /* Alerts */
 .alert-info {
@@ -204,8 +213,8 @@
 
 /* Modal Spinner */
 .modal-spinner {
-  border: 4px solid rgba(102, 126, 234, 0.1);
-  border-top: 4px solid #667eea;
+  border: 4px solid rgba(255, 144, 32, 0.15);
+  border-top: 4px solid #FF9020;
   border-radius: 50%;
   width: 50px;
   height: 50px;
@@ -219,9 +228,9 @@
   justify-content: flex-end;
   gap: 1rem;
   padding: 1.5rem 2rem;
-  border-top: 2px solid #e0e0e0;
+  border-top: 1px solid #e5e7eb;
   background: #f8f9fa;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 12px 12px;
 }
 
 .btn-cancel {
@@ -243,7 +252,7 @@
 
 .btn-save {
   padding: 0.8rem 2rem;
-  background: linear-gradient(135deg, #00c853, #00e676);
+  background: #FF9020;
   color: white;
   border: none;
   border-radius: 8px;
@@ -251,13 +260,67 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 200, 83, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 144, 32, 0.25);
 }
 
 .btn-save:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 200, 83, 0.4);
+  background: #f59e0b;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
 }
+
+.travel-file-card-existing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffd181;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  border: 1px solid #e5e7eb;
+}
+
+.travel-file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.travel-file-icon {
+  line-height: 1;
+}
+
+.travel-file-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.travel-btn-mini {
+  background: #fff;
+  border: 1px solid #e0e7ff;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.travel-btn-mini:hover:not(:disabled) {
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.travel-btn-mini:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.travel-btn-mini.view { color: #2563eb; }
+.travel-btn-mini.replace { color: #d97706; }
+.travel-btn-mini.delete { color: #dc2626; }
 
 .btn-save:disabled,
 .btn-cancel:disabled {
@@ -277,12 +340,12 @@
 }
 
 .travel-modal-body::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background-color: #f59e0b;
   border-radius: 10px;
 }
 
 .travel-modal-body::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #764ba2, #667eea);
+  background-color: #f59e0b;
 }
 
 /* Animations */

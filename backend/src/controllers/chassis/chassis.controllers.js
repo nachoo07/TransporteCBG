@@ -324,9 +324,9 @@ export const deleteChassis = async (req, res) => {
             fecha_de_baja: new Date()
         });
 
-        res.status(200).json({ success: true, message: 'Chasis dado de baja exitosamente' });
+        res.status(200).json({ success: true, message: 'Chasis archivado exitosamente' });
     } catch (error) {
-        logger.error({ event: 'delete_chassis_error', id, error: error.message }, 'Error al dar de baja chasis');
+        logger.error({ event: 'delete_chassis_error', id, error: error.message }, 'Error al archivar chasis');
         res.status(500).json({ success: false, message: 'Error eliminando chasis.' });
     }
 };

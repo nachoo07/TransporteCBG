@@ -20,7 +20,7 @@ const Chassis = () => {
 
     // Paginación
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 8;
+    const itemsPerPage = 5;
 
     // Modal de confirmación para reactivación
     const [reactivateConfirmModal, setReactivateConfirmModal] = useState({ isOpen: false, chassis: null });
@@ -99,6 +99,7 @@ const Chassis = () => {
                                 <th style={{ width: '50px' }}>Info</th>
                                 <th>Dominio (Patente)</th>
                                 <th>Vencimientos</th>
+                                {showReactivate && <th>Fecha de Archivo</th>}
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -118,22 +119,29 @@ const Chassis = () => {
                                             <span className={`traffic-light light-${status.color}`}></span>
                                             {status.text}
                                         </td>
+                                        {showReactivate && (
+                                            <td>
+                                                {item.fecha_de_baja ? new Date(item.fecha_de_baja).toLocaleDateString('es-AR') : '-'}
+                                            </td>
+                                        )}
                                         <td>
                                             <button className="action-btn view" title="Ver Detalle" onClick={() => handleOpenDetail(item)}>
                                                 👁️
-                                            </button>
-                                            <button className="action-btn edit" title="Editar" onClick={() => handleOpenEdit(item)}>
-                                                ✏️
                                             </button>
                                             {showReactivate ? (
                                                 <button className="action-btn reactivate" title="Reactivar" onClick={() => handleReactivateClick(item)}>
                                                     ♻️
                                                 </button>
                                             ) : (
-                                                <button className="action-btn delete" title="Dar de baja" onClick={() => handleDeleteClick(item)}>
-                                                    🗑️
-                                                </button>
-                                            )}
+                                                <>
+                                                    <button className="action-btn edit" title="Editar" onClick={() => handleOpenEdit(item)}>
+                                                        ✏️
+                                                    </button>
+                                                    <button className="action-btn delete" title="Archivar" onClick={() => handleDeleteClick(item)}>
+                                                        🗑️
+                                                    </button>
+                                                </>
+                    )}
                                         </td>
                                     </tr>
                                 );
@@ -189,7 +197,7 @@ const Chassis = () => {
                         className={`tab-button ${activeTab === 'inactive' ? 'active' : ''}`}
                         onClick={() => setActiveTab('inactive')}
                     >
-                        📦 Inactivos ({inactiveChasis.length})
+                        📦 Archivados ({inactiveChasis.length})
                     </button>
                 </div>
                 {/* BUSCADOR */}
@@ -203,7 +211,9 @@ const Chassis = () => {
                     />
                 </div>
                 <div className="tab-actions-header">
-                    <button onClick={handleOpenCreate} className="btn-add-chassis">+ Nuevo Chasis</button>
+                    {activeTab === 'active' && (
+                        <button onClick={handleOpenCreate} className="btn-add-chassis">+ Nuevo Chasis</button>
+                    )}
                 </div>
             </div>
 
