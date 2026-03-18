@@ -23,6 +23,7 @@ const uploadFields = upload.fields([
   { name: 'foto_km_inicio', maxCount: 1 },
   { name: 'foto_km_fin', maxCount: 1 },
   { name: 'foto_factura_combustible', maxCount: 1 },
+  { name: 'foto_factura_combustible_vuelta', maxCount: 1 },
 ]);
 
 router.get('/', verifyToken, getAllTravels);

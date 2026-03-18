@@ -45,7 +45,6 @@ const procesarVencimientos = async () => {
         for (const item of chasisList) {
             // Pasamos las fechas específicas de Chasis
             const nuevoEstado = calcularEstadoGeneral({
-                cedula: item.vencimiento_cedula_chasis,
                 vtv: item.vencimiento_vtv_chasis,
                 senasa: item.vencimiento_senasa_chasis,
             });
@@ -74,7 +73,6 @@ const procesarVencimientos = async () => {
             // Pasamos las fechas específicas de Acoplados
             // (Asegúrate que los nombres de columnas coincidan con tu DB)
             const nuevoEstado = calcularEstadoGeneral({
-                cedula: item.vencimiento_cedula_acoplado,
                 vtv: item.vencimiento_vtv_acoplado,
                 senasa: item.vencimiento_senasa_acoplado,
             });

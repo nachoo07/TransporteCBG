@@ -5,7 +5,14 @@ export const getErrorMsg = (error, defaultMsg = 'Ocurrió un error') => {
 
   // Caso 1: Array de errores de validación (Joi)
   if (data?.errors && Array.isArray(data.errors)) {
-    return data.errors.join('\n');
+    return data.errors
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        if (item?.field && item?.message) return `${item.field}: ${item.message}`;
+        if (item?.message) return item.message;
+        return String(item);
+      })
+      .join('\n');
   }
 
   // Caso 2: Mensaje directo del backend (ej: Email duplicado)

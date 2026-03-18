@@ -27,7 +27,8 @@ const resolveFolderPath = (fieldname) => {
         case 'archivo_factura_liquidado': folderPath = 'transporte-cbg/viajes/liquidaciones'; break;
         case 'foto_km_inicio':
         case 'foto_km_fin': folderPath = 'transporte-cbg/viajes/combustible/kilometraje'; break;
-        case 'foto_factura_combustible': folderPath = 'transporte-cbg/viajes/combustible/facturas'; break;
+        case 'foto_factura_combustible':
+        case 'foto_factura_combustible_vuelta': folderPath = 'transporte-cbg/viajes/combustible/facturas'; break;
     }
     return folderPath;
 };

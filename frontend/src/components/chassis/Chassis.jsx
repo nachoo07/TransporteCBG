@@ -5,7 +5,7 @@ import { useChasis } from '../../context/chasis/ChasisContext';
 import './chassis.css';
 
 const Chassis = () => {
-    const { chasis, inactiveChasis, loading, createChasis, updateChasis, deleteChasis, reactivateChasis, getChasisById } = useChasis();
+    const { chasis, inactiveChasis, loading, createChasis, updateChasis, deleteChasis, reactivateChasis, getChasisById, registerChassisService } = useChasis();
 
     // Estado para Formulario (Crear/Editar)
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -22,6 +22,7 @@ const Chassis = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
     const [isSaving, setIsSaving] = useState(false);
+    const [isRegisteringService, setIsRegisteringService] = useState(false);
 
     // Modal de confirmación para reactivación
     const [reactivateConfirmModal, setReactivateConfirmModal] = useState({ isOpen: false, chassis: null });
@@ -44,6 +45,17 @@ const Chassis = () => {
     };
 
     const handleCloseDetail = () => { setIsDetailOpen(false); setViewChassis(null); };
+
+    const handleRegisterService = async (chassisId, payload) => {
+        setIsRegisteringService(true);
+        const updated = await registerChassisService(chassisId, payload);
+        if (updated) {
+            const refreshed = await getChasisById(chassisId);
+            setViewChassis(refreshed || updated);
+        }
+        setIsRegisteringService(false);
+        return Boolean(updated);
+    };
 
     const handleSave = async (formData) => {
         setIsSaving(true);
@@ -92,6 +104,21 @@ const Chassis = () => {
         </span>
     );
 
+    const getServiceBadge = (status) => {
+        const normalized = String(status || 'AL_DIA').toUpperCase();
+        const copy = {
+            AL_DIA: 'Al día',
+            PROXIMO: 'Próximo',
+            PENDIENTE: 'Pendiente',
+        };
+
+        return (
+            <span className={`fleet-service-badge service-${normalized.toLowerCase()}`}>
+                {copy[normalized] || 'Al día'}
+            </span>
+        );
+    };
+
     // Reset de búsqueda al cambiar de pestaña
     React.useEffect(() => { setCurrentPage(1); }, [activeTab, search]);
 
@@ -111,6 +138,7 @@ const Chassis = () => {
                             <tr>
                                 <th>Dominio (Patente)</th>
                                 <th>Vencimientos</th>
+                                <th>Service</th>
                                 <th style={{ width: '190px' }}>Documentacion</th>
                                 {showReactivate && <th>Fecha de Archivo</th>}
                                 <th>Acciones</th>
@@ -126,6 +154,9 @@ const Chassis = () => {
                                         <td>
                                             <span className={`traffic-light light-${status.color}`}></span>
                                             {status.text}
+                                        </td>
+                                        <td>
+                                            {getServiceBadge(item.service_estado)}
                                         </td>
                                         <td>
                                             {getInfoBadge(item.info_completa)}
@@ -259,6 +290,8 @@ const Chassis = () => {
                 isOpen={isDetailOpen}
                 onClose={handleCloseDetail}
                 chassis={viewChassis}
+                onRegisterService={handleRegisterService}
+                isRegisteringService={isRegisteringService}
             />
 
             {/* MODAL CONFIRMACIÓN REACTIVACIÓN */}

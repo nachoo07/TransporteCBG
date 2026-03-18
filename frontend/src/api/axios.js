@@ -7,6 +7,9 @@ const client = axios.create({
   withCredentials: true,
 });
 
+let refreshRequestPromise = null;
+let sessionExpiredEventEmitted = false;
+
 /**
  * =========================
  * CONTROL GLOBAL OFFLINE / NETWORK FAIL
@@ -18,6 +21,12 @@ const emitOfflineOnce = () => {
   if (offlineEventEmitted) return;
   offlineEventEmitted = true;
   window.dispatchEvent(new Event('APP_OFFLINE'));
+};
+
+const emitSessionExpiredOnce = () => {
+  if (sessionExpiredEventEmitted) return;
+  sessionExpiredEventEmitted = true;
+  window.dispatchEvent(new Event('SESSION_EXPIRED'));
 };
 
 /**
@@ -42,7 +51,11 @@ client.interceptors.request.use(
  * =========================
  */
 client.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    offlineEventEmitted = false;
+    sessionExpiredEventEmitted = false;
+    return response;
+  },
   async (error) => {
     // Network error (sin respuesta del server): tratamos como offline
     if (!error?.response && (error?.code === 'ERR_NETWORK' || error?.message === 'Network Error')) {
@@ -70,16 +83,22 @@ client.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await client.post('/auth/refresh-token');
+        if (!refreshRequestPromise) {
+          refreshRequestPromise = client.post('/auth/refresh-token');
+        }
+
+        await refreshRequestPromise;
         return client(originalRequest);
       } catch (refreshError) {
         // Solo consideramos "sesión expirada" si el server respondió 401/403.
         // Si falla por red/timeout, NO deslogueamos al usuario.
         const status = refreshError?.response?.status;
         if (status === 401 || status === 403) {
-          window.dispatchEvent(new Event('SESSION_EXPIRED'));
+          emitSessionExpiredOnce();
         }
         return Promise.reject(refreshError);
+      } finally {
+        refreshRequestPromise = null;
       }
     }
 

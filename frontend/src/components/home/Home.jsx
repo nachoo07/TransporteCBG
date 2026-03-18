@@ -94,7 +94,6 @@ const Home = () => {
 
       checkDate(c.vencimiento_vtv_chasis, 'VTV');
       checkDate(c.vencimiento_senasa_chasis, 'SENASA');
-      checkDate(c.vencimiento_cedula_chasis, 'Cédula');
       // Agrega aquí más campos si necesitas
     });
 
@@ -121,14 +120,36 @@ const Home = () => {
 
       checkDate(a.vencimiento_vtv_acoplado, 'VTV');
       checkDate(a.vencimiento_senasa_acoplado, 'SENASA');
-      checkDate(a.vencimiento_cedula_acoplado, 'Cédula');
-      checkDate(a.vencimiento_tipificacion_carga_acoplado, 'Tipificación de Carga');
-      checkDate(a.vencimiento_homologacion_acoplado, 'Homologación');
     });
 
     // Ordenar: Primero los vencidos, luego por fecha más cercana
     return allAlerts.sort((a, b) => a.date - b.date);
   }, [drivers, chasis, coupled]);
+
+  const serviceAlerts = useMemo(() => {
+    return chasis
+      .filter((item) => isActive(item.activo))
+      .filter((item) => item.service_estado === 'PENDIENTE' || item.service_estado === 'PROXIMO')
+      .map((item) => {
+        const kmRestantes = Number(item.km_restantes_service ?? 0);
+        const isOverdue = item.service_estado === 'PENDIENTE';
+        const overdueKm = Math.max(0, Number(item.km_desde_ultimo_service ?? 0) - Number(item.service_intervalo_km ?? 40000));
+
+        return {
+          id: item.id,
+          domain: item.Dominio_chasis,
+          status: item.service_estado,
+          isOverdue,
+          kmRestantes,
+          overdueKm,
+        };
+      })
+      .sort((a, b) => {
+        if (a.isOverdue !== b.isOverdue) return a.isOverdue ? -1 : 1;
+        if (a.isOverdue && b.isOverdue) return b.overdueKm - a.overdueKm;
+        return a.kmRestantes - b.kmRestantes;
+      });
+  }, [chasis]);
 
 
   // --- DATOS ESTADÍSTICOS ---
@@ -294,6 +315,41 @@ const Home = () => {
                   ) : (
                     <div className="empty-state">
                       <span>✅ Todo en regla</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="feed-card service-feed">
+                <div className="feed-header">
+                  <h3>🛠️ Alertas de Service</h3>
+                  <span className={`badge-count ${serviceAlerts.length === 0 ? 'badge-count-ok' : ''}`}>{serviceAlerts.length}</span>
+                </div>
+                <div className="feed-list-scroll">
+                  {serviceAlerts.length > 0 ? (
+                    serviceAlerts.map((alert) => (
+                      <div key={alert.id} className={`alert-item ${alert.isOverdue ? 'expired' : 'warning'}`}>
+                        <div className="alert-icon">🚛</div>
+                        <div className="alert-info-home">
+                          <strong>{alert.domain}</strong>
+                          <span>
+                            {alert.isOverdue
+                              ? `Service pendiente · excedido por ${alert.overdueKm.toLocaleString('es-AR')} km`
+                              : `Próximo service · faltan ${alert.kmRestantes.toLocaleString('es-AR')} km`}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="service-alert-link"
+                          onClick={() => navigate('/chassis')}
+                        >
+                          Ver flota
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="empty-state">
+                      <span>✅ Sin services pendientes</span>
                     </div>
                   )}
                 </div>

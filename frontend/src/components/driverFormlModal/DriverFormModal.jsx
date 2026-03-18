@@ -232,8 +232,8 @@ import './driverFormModal.css';
 
                     <div className="dfm-row-doc">
                         <div className="dfm-group">
-                            <label>Venc. Licencia</label>
-                            <input type="date" name="vencimiento_licencia" className="dfm-input" value={formData.vencimiento_licencia} onChange={handleChange} />
+                            <label>Venc. Licencia *</label>
+                            <input type="date" name="vencimiento_licencia" className="dfm-input" value={formData.vencimiento_licencia} onChange={handleChange} required />
                         </div>
                         <FileControl label="Archivo Licencia" inputName="archivo_licencia" currentUrl={driverToEdit?.url_licencia} />
                     </div>

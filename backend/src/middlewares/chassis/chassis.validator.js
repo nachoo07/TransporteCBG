@@ -16,6 +16,14 @@ const createSchema = Joi.object({
   vencimiento_senasa_chasis: Joi.string().allow('', null).optional(),
   vencimiento_homologacion_chasis: Joi.string().allow('', null).optional(),
   vencimiento_tipificacion_carga_chasis: Joi.string().allow('', null).optional(),
+  km_inicial: Joi.number().min(0).required().messages({
+    'number.base': 'El kilometraje inicial debe ser un número válido',
+    'number.min': 'El kilometraje inicial no puede ser negativo',
+    'any.required': 'El kilometraje inicial es obligatorio'
+  }),
+  service_intervalo_km: Joi.number().integer().min(1).optional(),
+  fecha_ultimo_service: Joi.string().allow('', null).optional(),
+  observacion_ultimo_service: Joi.string().allow('', null).max(1000).optional(),
 });
 
 // Esquema para actualización: todo opcional pero validado
@@ -31,6 +39,10 @@ const updateSchema = Joi.object({
   vencimiento_senasa_chasis: Joi.string().allow('', null).optional(),
   vencimiento_homologacion_chasis: Joi.string().allow('', null).optional(),
   vencimiento_tipificacion_carga_chasis: Joi.string().allow('', null).optional(),
+  km_inicial: Joi.number().min(0).optional(),
+  service_intervalo_km: Joi.number().integer().min(1).optional(),
+  fecha_ultimo_service: Joi.string().allow('', null).optional(),
+  observacion_ultimo_service: Joi.string().allow('', null).max(1000).optional(),
 }).options({ abortEarly: false, allowUnknown: true });
 
 export const validateChassisFiles = (opts = {}) => validateDriverFiles(opts);

@@ -1,11 +1,8 @@
 export const verificarInfoCompletaCoupled = (coupled) => {
   const camposRequeridos = [
     coupled.Dominio_acoplado,
-    coupled.vencimiento_cedula_acoplado,
     coupled.vencimiento_vtv_acoplado,
     coupled.vencimiento_senasa_acoplado,
-    coupled.vencimiento_homologacion_acoplado,
-    coupled.vencimiento_tipificacion_carga_acoplado,
     coupled.url_cedula_acoplado,
     coupled.url_vtv_acoplado,
     coupled.url_senasa_acoplado,

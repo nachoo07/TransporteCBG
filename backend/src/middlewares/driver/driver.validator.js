@@ -22,7 +22,10 @@ const createDriverSchema = Joi.object({
   activo: Joi.boolean().optional(),
   fecha_de_alta: Joi.date().iso().optional().messages({ 'date.format': 'fecha_de_alta debe ser una fecha ISO válida.' }),
   fecha_de_baja: Joi.date().iso().allow(null, '').optional(),
-  vencimiento_licencia: Joi.date().iso().allow(null, '').optional(),
+  vencimiento_licencia: Joi.date().iso().required().messages({
+    'date.base': 'La fecha de vencimiento de la licencia debe ser válida.',
+    'any.required': 'La fecha de vencimiento de la licencia es obligatoria.'
+  }),
   vencimiento_psicofisico: Joi.date().iso().allow(null, '').optional(),
   vencimiento_carga_normal: Joi.date().iso().allow(null, '').optional(),
   vencimiento_carga_peligrosa: Joi.date().iso().allow(null, '').optional(),
@@ -39,7 +42,10 @@ const updateDriverSchema = Joi.object({
   activo: Joi.boolean().optional(),
   fecha_de_alta: Joi.date().iso().optional(),
   fecha_de_baja: Joi.date().iso().allow(null, '').optional(),
-  vencimiento_licencia: Joi.date().iso().allow(null, '').optional(),
+  vencimiento_licencia: Joi.date().iso().required().messages({
+    'date.base': 'La fecha de vencimiento de la licencia debe ser válida.',
+    'any.required': 'La fecha de vencimiento de la licencia es obligatoria.'
+  }),
   vencimiento_psicofisico: Joi.date().iso().allow(null, '').optional(),
   vencimiento_carga_normal: Joi.date().iso().allow(null, '').optional(),
   vencimiento_carga_peligrosa: Joi.date().iso().allow(null, '').optional(),

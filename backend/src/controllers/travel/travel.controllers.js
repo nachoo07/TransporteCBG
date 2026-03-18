@@ -2,6 +2,7 @@ import db from '../../db/db.connection.js';
 import logger from '../../utils/pino/logger.js';
 import { cloudinaryInstance } from '../../../files/cloudinary.js';
 import { deleteFileFromCloudinary } from '../../../files/deleteFileCloudinary.js';
+import { toFiniteNumberOrNull } from '../../utils/chassis/serviceStatus.js';
 
 // Helper para formatear fechas sin problemas de timezone
 const formatDateForDB = (dateString) => {
@@ -119,6 +120,46 @@ const deriveGeneralState = ({ liquidationState, invoiceState, paymentState }) =>
   return 'INCOMPLETO';
 };
 
+const recalculateChassisOdometer = async (chassisId) => {
+  const normalizedChassisId = Number.parseInt(String(chassisId), 10);
+  if (!Number.isFinite(normalizedChassisId) || normalizedChassisId <= 0) {
+    return;
+  }
+
+  const currentChassis = await db('chasis')
+    .select('id', 'km_actual', 'km_inicial')
+    .where({ id: normalizedChassisId })
+    .first();
+
+  if (!currentChassis) return;
+
+  const kmInicial = toFiniteNumberOrNull(currentChassis.km_inicial) ?? 0;
+  const trips = await db('viajes_registrados')
+    .select(
+      'combustible_km', 'combustible_km_fin',
+      'combustible_km_vuelta', 'combustible_km_fin_vuelta',
+    )
+    .where({ chasis_id: normalizedChassisId, anulado: false });
+
+  const kmAcumulados = trips.reduce((total, trip) => {
+    const kmInicio = toFiniteNumberOrNull(trip.combustible_km);
+    const kmFin = toFiniteNumberOrNull(trip.combustible_km_fin);
+    const kmInicioVuelta = toFiniteNumberOrNull(trip.combustible_km_vuelta);
+    const kmFinVuelta = toFiniteNumberOrNull(trip.combustible_km_fin_vuelta);
+
+    const ida = (kmInicio === null || kmFin === null) ? 0 : Math.max(0, kmFin - kmInicio);
+    const vuelta = (kmInicioVuelta === null || kmFinVuelta === null) ? 0 : Math.max(0, kmFinVuelta - kmInicioVuelta);
+    return total + ida + vuelta;
+  }, 0);
+
+  const nextKmActual = kmInicial + kmAcumulados;
+
+  await db('chasis').where({ id: normalizedChassisId }).update({
+    km_actual: nextKmActual,
+    updated_at: new Date(),
+  });
+};
+
 export const createTravel = async (req, res) => {
   const startTime = Date.now();
   const files = req.files || {};
@@ -150,6 +191,10 @@ export const createTravel = async (req, res) => {
     let fotoFacturaCombustibleUrl = null;
     if (files.foto_factura_combustible && files.foto_factura_combustible[0]) {
       fotoFacturaCombustibleUrl = files.foto_factura_combustible[0].path;
+    }
+    let fotoFacturaCombustibleVueltaUrl = null;
+    if (files.foto_factura_combustible_vuelta && files.foto_factura_combustible_vuelta[0]) {
+      fotoFacturaCombustibleVueltaUrl = files.foto_factura_combustible_vuelta[0].path;
     }
 
     // Preparar objeto para insertar
@@ -222,6 +267,13 @@ export const createTravel = async (req, res) => {
       foto_km_inicio: fotoKmInicioUrl,
       foto_km_fin: fotoKmFinUrl,
       foto_factura_combustible: fotoFacturaCombustibleUrl,
+      estacion_nombre_vuelta: data.fuel_return_station || null,
+      combustible_litros_vuelta: parseLocaleNumber(data.fuel_return_liters) || 0,
+      combustible_monto_vuelta: parseLocaleNumber(data.fuel_return_amount) || 0,
+      factura_combustible_vuelta: data.fuel_return_invoice || null,
+      combustible_km_vuelta: data.fuel_return_km ? parseLocaleNumber(data.fuel_return_km) : null,
+      combustible_km_fin_vuelta: data.fuel_return_km_end ? parseLocaleNumber(data.fuel_return_km_end) : null,
+      foto_factura_combustible_vuelta: fotoFacturaCombustibleVueltaUrl,
 
       // States
       estado_liquidacion: liquidationState,
@@ -237,6 +289,7 @@ export const createTravel = async (req, res) => {
 
     // Insertar en BD
     const [id] = await db('viajes_registrados').insert(newTravel);
+    await recalculateChassisOdometer(newTravel.chasis_id);
 
     // Traer viaje con joins para devolver datos completos al front
     const createdTravel = await db('viajes_registrados')
@@ -422,6 +475,12 @@ export const updateTravel = async (req, res) => {
       factura_combustible: toNullIfEmpty(data.fuel_invoice),
       combustible_km: numberOrNull(data.fuel_km),
       combustible_km_fin: numberOrNull(data.fuel_km_end),
+      estacion_nombre_vuelta: toNullIfEmpty(data.fuel_return_station),
+      combustible_litros_vuelta: numberOrNull(data.fuel_return_liters),
+      combustible_monto_vuelta: numberOrNull(data.fuel_return_amount),
+      factura_combustible_vuelta: toNullIfEmpty(data.fuel_return_invoice),
+      combustible_km_vuelta: numberOrNull(data.fuel_return_km),
+      combustible_km_fin_vuelta: numberOrNull(data.fuel_return_km_end),
       orden_pago: toNullIfEmpty(data.payment_order),
     };
 
@@ -477,6 +536,16 @@ export const updateTravel = async (req, res) => {
       travelToUpdate.foto_factura_combustible = null;
     }
 
+    if (files.foto_factura_combustible_vuelta && files.foto_factura_combustible_vuelta[0]) {
+      if (currentTravel.foto_factura_combustible_vuelta) {
+        await deleteFileFromCloudinary(currentTravel.foto_factura_combustible_vuelta);
+      }
+      travelToUpdate.foto_factura_combustible_vuelta = files.foto_factura_combustible_vuelta[0].path;
+    } else if (data.delete_fuel_return_invoice_photo === 'true' && currentTravel.foto_factura_combustible_vuelta) {
+      await deleteFileFromCloudinary(currentTravel.foto_factura_combustible_vuelta);
+      travelToUpdate.foto_factura_combustible_vuelta = null;
+    }
+
     const nextInvoiceNumber =
       travelToUpdate.numero_factura !== undefined ? travelToUpdate.numero_factura : currentTravel.numero_factura;
     const nextInvoiceDate =
@@ -510,6 +579,11 @@ export const updateTravel = async (req, res) => {
 
     // Actualizar en BD
     await db('viajes_registrados').where({ id }).update(travelToUpdate);
+    const affectedChassisIds = new Set([
+      currentTravel.chasis_id,
+      travelToUpdate.chasis_id,
+    ].filter((value) => value !== undefined && value !== null && value !== ''));
+    await Promise.all(Array.from(affectedChassisIds).map((chassisId) => recalculateChassisOdometer(chassisId)));
 
     // Traer viaje actualizado con joins para devolver datos completos y limpios
     const updatedTravel = await db('viajes_registrados')
@@ -752,6 +826,7 @@ export const deleteTravel = async (req, res) => {
 
     // Eliminar viaje
     await db('viajes_registrados').where({ id }).del();
+    await recalculateChassisOdometer(travel.chasis_id);
 
     logger.info({ event: 'delete_travel_success', travelId: id }, 'Travel deleted');
     res.status(200).json({ success: true, message: 'Travel deleted successfully' });
@@ -788,6 +863,7 @@ export const cancelTravel = async (req, res) => {
         anulado_by_user_id: req.user?.id ?? null,
         updated_at: new Date(),
       });
+    await recalculateChassisOdometer(travel.chasis_id);
 
     const updated = await db('viajes_registrados').where({ id }).first();
     return res.status(200).json({ success: true, message: 'Viaje anulado', data: updated });
@@ -817,6 +893,7 @@ export const restoreCanceledTravel = async (req, res) => {
         anulado_by_user_id: null,
         updated_at: new Date(),
       });
+    await recalculateChassisOdometer(travel.chasis_id);
 
     const updated = await db('viajes_registrados').where({ id }).first();
     return res.status(200).json({ success: true, message: 'Viaje restaurado', data: updated });

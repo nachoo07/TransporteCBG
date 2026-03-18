@@ -9,10 +9,7 @@ const CoupledFormModal = ({isOpen, onClose, onSubmit, coupledToEdit, isSaving = 
                 Dominio_acoplado: '',
 
                 vencimiento_vtv_acoplado: '',
-                vencimiento_cedula_acoplado: '',
                 vencimiento_senasa_acoplado: '',
-                vencimiento_homologacion_acoplado: '',
-                vencimiento_tipificacion_carga_acoplado: ''
             };
 
       const [formData, setFormData] = useState(initialFormState);
@@ -28,11 +25,8 @@ const CoupledFormModal = ({isOpen, onClose, onSubmit, coupledToEdit, isSaving = 
                       setFormData({
                           Dominio_acoplado: coupledToEdit.Dominio_acoplado || '',
 
-                          vencimiento_cedula_acoplado: formatDateForInput(coupledToEdit.vencimiento_cedula_acoplado),
                           vencimiento_vtv_acoplado: formatDateForInput(coupledToEdit.vencimiento_vtv_acoplado),
                           vencimiento_senasa_acoplado: formatDateForInput(coupledToEdit.vencimiento_senasa_acoplado),
-                          vencimiento_tipificacion_carga_acoplado: formatDateForInput(coupledToEdit.vencimiento_tipificacion_carga_acoplado),
-                          vencimiento_homologacion_acoplado: formatDateForInput(coupledToEdit.vencimiento_homologacion_acoplado),
                       });
                   } else {
                       setFormData(initialFormState);
@@ -219,13 +213,10 @@ return (
 
                     <h4 className="cfm-section-title">Documentación Obligatoria</h4>
 
-                    {/* CÉDULA + TÍTULO */}
-                    <div className="cfm-row">
-                        <div className="cfm-group">
-                            <label>Venc. Cédula *</label>
-                            <input type="date" name="vencimiento_cedula_acoplado" className="cfm-input" value={formData.vencimiento_cedula_acoplado} onChange={handleChange} />
-                        </div>
-                        <FileControl label="Foto Cédula" inputName="url_cedula_acoplado" currentUrl={coupledToEdit?.url_cedula_acoplado} />
+                    <div className="cfm-row cfm-row-docs2">
+                        <FileControl label="Doc. Cédula" inputName="url_cedula_acoplado" currentUrl={coupledToEdit?.url_cedula_acoplado} />
+                        <FileControl label="Título del Automotor" inputName="url_titulo_acoplado" currentUrl={coupledToEdit?.url_titulo_acoplado} />
+                        <div className="cfm-group" />
                     </div>
                     
                     {/* VTV */}
@@ -237,37 +228,20 @@ return (
                         <FileControl label="Certificado VTV" inputName="url_vtv_acoplado" currentUrl={coupledToEdit?.url_vtv_acoplado} />
                     </div>
 
-                       {/* TÍTULO (Solo archivo, no suele vencer) */}
-                    <div className="cfm-row single-col">
-                        <FileControl label="Título del Automotor" inputName="url_titulo_acoplado" currentUrl={coupledToEdit?.url_titulo_acoplado} />
-                    </div>
-
                     <h4 className="cfm-section-title">Habilitaciones y Cargas</h4>
 
                     {/* RUTA / SENASA */}
                     <div className="cfm-row">
                         <div className="cfm-group">
-                            <label>Venc. SENASA/Ruta</label>
+                            <label>Venc. SENASA</label>
                             <input type="date" name="vencimiento_senasa_acoplado" className="cfm-input" value={formData.vencimiento_senasa_acoplado} onChange={handleChange} />
                         </div>
-                        <FileControl label="Certificado SENASA/Ruta" inputName="url_senasa_acoplado" currentUrl={coupledToEdit?.url_senasa_acoplado} />
+                        <FileControl label="Certificado SENASA" inputName="url_senasa_acoplado" currentUrl={coupledToEdit?.url_senasa_acoplado} />
                     </div>
 
-                    {/* TIPIFICACIÓN */}
-                    <div className="cfm-row">
-                        <div className="cfm-group">
-                            <label>Venc. Tipificación</label>
-                            <input type="date" name="vencimiento_tipificacion_carga_acoplado" className="cfm-input" value={formData.vencimiento_tipificacion_carga_acoplado} onChange={handleChange} />
-                        </div>
+                    <div className="cfm-row cfm-row-docs3">
+                        <FileControl label="Doc. SENASA" inputName="url_senasa_acoplado" currentUrl={coupledToEdit?.url_senasa_acoplado} />
                         <FileControl label="Doc. Tipificación" inputName="url_tipificacion_carga_acoplado" currentUrl={coupledToEdit?.url_tipificacion_carga_acoplado} />
-                    </div>
-
-                    {/* HOMOLOGACIÓN */}
-                    <div className="cfm-row">
-                        <div className="cfm-group">
-                            <label>Venc. Homologación</label>
-                            <input type="date" name="vencimiento_homologacion_acoplado" className="cfm-input" value={formData.vencimiento_homologacion_acoplado} onChange={handleChange} />
-                        </div>
                         <FileControl label="Doc. Homologación" inputName="url_homologacion_acoplado" currentUrl={coupledToEdit?.url_homologacion_acoplado} />
                     </div>
 

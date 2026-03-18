@@ -1,6 +1,7 @@
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import client from '../../api/axios';
 import { useAuth } from '../../context/login/LoginContext';
+import { useChasis } from '../../context/chasis/ChasisContext';
 import { showSuccessToast, showErrorAlert, showConfirmAlert } from '../../utils/alerts/Alerts';
 import { getErrorMsg } from '../../utils/helperError/ErrorMsg';
 
@@ -14,6 +15,7 @@ export const useTravel = () => {
 
 export const TravelProvider = ({ children }) => {
     const { isAuthenticated } = useAuth();
+    const { getChasis, getInactiveChasis } = useChasis();
     const [travels, setTravels] = useState([]);
     const [loading, setLoading] = useState(false);
     const [includeAnnulled, setIncludeAnnulled] = useState(false);
@@ -53,6 +55,8 @@ export const TravelProvider = ({ children }) => {
         try {
             await client.post('/travels/create', travelData);
             await getTravels(); // Recarga con joins y datos consistentes
+            await getChasis?.();
+            await getInactiveChasis?.();
             showSuccessToast('Viaje creado exitosamente');
             return true;
         } catch (error) {
@@ -67,6 +71,8 @@ export const TravelProvider = ({ children }) => {
         try {
             await client.put(`/travels/update/${id}`, travelData);
             await getTravels(); // Recarga para reflejar cambios y joins
+            await getChasis?.();
+            await getInactiveChasis?.();
             showSuccessToast('Viaje actualizado exitosamente');
             return true;
         } catch (error) {
@@ -95,6 +101,8 @@ export const TravelProvider = ({ children }) => {
         try {
             await client.put(`/travels/cancel/${id}`, { motivo });
             await getTravels();
+            await getChasis?.();
+            await getInactiveChasis?.();
             showSuccessToast('Viaje anulado');
             return true;
         } catch (error) {
@@ -109,6 +117,8 @@ export const TravelProvider = ({ children }) => {
         try {
             await client.put(`/travels/restore/${id}`);
             await getTravels();
+            await getChasis?.();
+            await getInactiveChasis?.();
             showSuccessToast('Viaje restaurado');
             return true;
         } catch (error) {
@@ -129,6 +139,8 @@ export const TravelProvider = ({ children }) => {
         try {
             await client.delete(`/travels/delete/${id}`);
             setTravels(prev => Array.isArray(prev) ? prev.filter(travel => travel.id !== id) : []);
+            await getChasis?.();
+            await getInactiveChasis?.();
             showSuccessToast('Viaje eliminado exitosamente');
             return true;
         } catch (error) {

@@ -3,6 +3,7 @@ import logger from '../../utils/pino/logger.js';
 import { cloudinaryInstance } from '../../../files/cloudinary.js';
 import { calcularEstadoGeneral, calcularEstadoFecha } from '../../utils/generalCondition/driverStatus.js';
 import { deleteFileFromCloudinary } from '../../../files/deleteFileCloudinary.js';
+import { buildServiceSnapshot, toFiniteNumberOrNull } from '../../utils/chassis/serviceStatus.js';
 
 // Función auxiliar para rollback de archivos en caso de error
 const rollbackUploadedFiles = async (files) => {
@@ -20,11 +21,8 @@ const rollbackUploadedFiles = async (files) => {
 const verificarInfoCompleta = (chassis) => {
     const camposRequeridos = [
         chassis.Dominio_chasis,
-        chassis.vencimiento_cedula_chasis,
         chassis.vencimiento_vtv_chasis,
         chassis.vencimiento_senasa_chasis,
-        chassis.vencimiento_homologacion_chasis,
-        chassis.vencimiento_tipificacion_carga_chasis,
         chassis.url_cedula_chasis,
         chassis.url_vtv_chasis,
         chassis.url_senasa_chasis,
@@ -34,6 +32,31 @@ const verificarInfoCompleta = (chassis) => {
     ];
     return camposRequeridos.every(campo => campo !== null && campo !== undefined && campo !== '');
 }
+
+const withServiceData = (chassis) => ({
+    ...chassis,
+    ...buildServiceSnapshot(chassis),
+});
+
+const calculateAccumulatedKmFromTrips = async (chassisId) => {
+    const trips = await connection('viajes_registrados')
+        .select(
+            'combustible_km', 'combustible_km_fin',
+            'combustible_km_vuelta', 'combustible_km_fin_vuelta'
+        )
+        .where({ chasis_id: chassisId, anulado: false });
+
+    return trips.reduce((total, trip) => {
+        const kmInicio = toFiniteNumberOrNull(trip.combustible_km);
+        const kmFin = toFiniteNumberOrNull(trip.combustible_km_fin);
+        const kmInicioVuelta = toFiniteNumberOrNull(trip.combustible_km_vuelta);
+        const kmFinVuelta = toFiniteNumberOrNull(trip.combustible_km_fin_vuelta);
+
+        const ida = (kmInicio === null || kmFin === null) ? 0 : Math.max(0, kmFin - kmInicio);
+        const vuelta = (kmInicioVuelta === null || kmFinVuelta === null) ? 0 : Math.max(0, kmFinVuelta - kmInicioVuelta);
+        return total + ida + vuelta;
+    }, 0);
+};
 
 
 
@@ -47,13 +70,15 @@ export const getAllChassis = async (req, res) => {
                 'vencimiento_cedula_chasis', 'vencimiento_vtv_chasis',
                 'vencimiento_senasa_chasis', 'vencimiento_homologacion_chasis',
                 'vencimiento_tipificacion_carga_chasis',
+                'km_inicial', 'km_actual', 'km_ultimo_service',
+                'fecha_ultimo_service', 'observacion_ultimo_service', 'service_intervalo_km',
                 'url_cedula_chasis', 'url_vtv_chasis', 'url_senasa_chasis',
                 'url_homologacion_chasis', 'url_tipificacion_carga_chasis',
                 'url_titulo_chasis', 'created_at', 'updated_at'
             )
             .where('activo', true);
 
-        const chassisRaw = chassis.map(item => ({
+        const chassisRaw = chassis.map(item => withServiceData({
             ...item,
             info_completa: verificarInfoCompleta(item)
         }));
@@ -88,6 +113,8 @@ export const getChassisById = async (req, res) => {
                 'vencimiento_cedula_chasis', 'vencimiento_vtv_chasis',
                 'vencimiento_senasa_chasis', 'vencimiento_homologacion_chasis',
                 'vencimiento_tipificacion_carga_chasis',
+                'km_inicial', 'km_actual', 'km_ultimo_service',
+                'fecha_ultimo_service', 'observacion_ultimo_service', 'service_intervalo_km',
                 'url_cedula_chasis', 'url_vtv_chasis', 'url_senasa_chasis',
                 'url_homologacion_chasis', 'url_tipificacion_carga_chasis',
                 'url_titulo_chasis', 'created_at', 'updated_at'
@@ -99,14 +126,14 @@ export const getChassisById = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Chasis no encontrado.' });
         }
 
-        const chassisConEstados = {
+        const chassisConEstados = withServiceData({
             ...chassis,
             estado_cedula_chasis: calcularEstadoFecha(chassis.vencimiento_cedula_chasis),
             estado_vtv_chasis: calcularEstadoFecha(chassis.vencimiento_vtv_chasis),
             estado_senasa_chasis: calcularEstadoFecha(chassis.vencimiento_senasa_chasis),
             estado_tipificacion_chasis: null,
             estado_homologacion_chasis: null,
-        };
+        });
 
         const duration = Date.now() - startTime;
         logger.info({ event: 'getChassisByIdSuccess', id, duration_ms: `${duration}ms` }, 'Chasis obtenido correctamente');
@@ -156,16 +183,22 @@ export const createChassis = async (req, res) => {
         }
 
         const estadoCalculado = calcularEstadoGeneral({
-            vencimiento_cedula: rawData.vencimiento_cedula_chasis,
             vencimiento_vtv: rawData.vencimiento_vtv_chasis,
             vencimiento_senasa: rawData.vencimiento_senasa_chasis,
         });
+        const kmInicial = toFiniteNumberOrNull(rawData.km_inicial) ?? 0;
 
         const cleanDate = (date) => (date === '' || date === 'null' || date === undefined) ? null : date;
         const chassisToSave = {
             Dominio_chasis: rawData.Dominio_chasis,
             activo: rawData.activo === 'false' ? false : true,
             estado_general: estadoCalculado,
+            km_inicial: kmInicial,
+            km_actual: kmInicial,
+            km_ultimo_service: kmInicial,
+            fecha_ultimo_service: cleanDate(rawData.fecha_ultimo_service),
+            observacion_ultimo_service: rawData.observacion_ultimo_service || null,
+            service_intervalo_km: toFiniteNumberOrNull(rawData.service_intervalo_km) ?? 40000,
 
             vencimiento_cedula_chasis: cleanDate(rawData.vencimiento_cedula_chasis),
             vencimiento_tipificacion_carga_chasis: cleanDate(rawData.vencimiento_tipificacion_carga_chasis),
@@ -183,10 +216,10 @@ export const createChassis = async (req, res) => {
 
         const [newId] = await connection('chasis').insert(chassisToSave);
         const createdChassis = await connection('chasis').where({ id: newId }).first();
-        const createdChassisWithStatus = {
+        const createdChassisWithStatus = withServiceData({
             ...createdChassis,
             info_completa: verificarInfoCompleta(createdChassis)
-        };
+        });
 
         logger.info(`✅ Chasis creado ID: ${newId}`);
         res.status(201).json({ success: true, data: createdChassisWithStatus });
@@ -253,6 +286,8 @@ export const updateChassis = async (req, res) => {
         // Campos Texto
         if (rawData.Dominio_chasis) chassisToUpdate.Dominio_chasis = rawData.Dominio_chasis;
         if (rawData.activo !== undefined) chassisToUpdate.activo = resolverBool(rawData.activo, currentChassis.activo);
+        if (rawData.observacion_ultimo_service !== undefined) chassisToUpdate.observacion_ultimo_service = resolver(rawData.observacion_ultimo_service, currentChassis.observacion_ultimo_service);
+        if (rawData.service_intervalo_km !== undefined) chassisToUpdate.service_intervalo_km = toFiniteNumberOrNull(rawData.service_intervalo_km) ?? currentChassis.service_intervalo_km;
 
         // Fechas
         chassisToUpdate.vencimiento_cedula_chasis = resolver(rawData.vencimiento_cedula_chasis, currentChassis.vencimiento_cedula_chasis);
@@ -260,10 +295,25 @@ export const updateChassis = async (req, res) => {
         chassisToUpdate.vencimiento_senasa_chasis = resolver(rawData.vencimiento_senasa_chasis, currentChassis.vencimiento_senasa_chasis);
         chassisToUpdate.vencimiento_homologacion_chasis = resolver(rawData.vencimiento_homologacion_chasis, currentChassis.vencimiento_homologacion_chasis);
         chassisToUpdate.vencimiento_tipificacion_carga_chasis = resolver(rawData.vencimiento_tipificacion_carga_chasis, currentChassis.vencimiento_tipificacion_carga_chasis);
+        chassisToUpdate.fecha_ultimo_service = resolver(rawData.fecha_ultimo_service, currentChassis.fecha_ultimo_service);
+        if (rawData.km_inicial !== undefined) {
+            const kmInicial = toFiniteNumberOrNull(rawData.km_inicial);
+            if (kmInicial !== null) {
+                const kmAcumulados = await calculateAccumulatedKmFromTrips(id);
+
+                chassisToUpdate.km_inicial = kmInicial;
+                chassisToUpdate.km_actual = kmInicial + kmAcumulados;
+
+                // Si todavía no se registró ningún service, el km inicial sigue siendo
+                // la referencia del contador y conviene mantenerlos alineados.
+                if (!currentChassis.fecha_ultimo_service) {
+                    chassisToUpdate.km_ultimo_service = kmInicial;
+                }
+            }
+        }
 
         // Recálculo Estado
         chassisToUpdate.estado_general = calcularEstadoGeneral({
-            vencimiento_cedula: chassisToUpdate.vencimiento_cedula_chasis,
             vencimiento_vtv: chassisToUpdate.vencimiento_vtv_chasis,
             vencimiento_senasa: chassisToUpdate.vencimiento_senasa_chasis,
         });
@@ -300,10 +350,10 @@ export const updateChassis = async (req, res) => {
         }
 
         const updatedChassis = await connection('chasis').where({ id }).first();
-        const updatedChassisWithStatus = {
+        const updatedChassisWithStatus = withServiceData({
             ...updatedChassis,
             info_completa: verificarInfoCompleta(updatedChassis)
-        };
+        });
 
         res.status(200).json({ success: true, message: 'Actualizado', data: updatedChassisWithStatus });
 
@@ -348,6 +398,8 @@ export const getInactiveChassis = async (req, res) => {
                 'vencimiento_cedula_chasis', 'vencimiento_vtv_chasis',
                 'vencimiento_senasa_chasis', 'vencimiento_homologacion_chasis',
                 'vencimiento_tipificacion_carga_chasis',
+                'km_inicial', 'km_actual', 'km_ultimo_service',
+                'fecha_ultimo_service', 'observacion_ultimo_service', 'service_intervalo_km',
                 'url_cedula_chasis', 'url_vtv_chasis', 'url_senasa_chasis',
                 'url_homologacion_chasis', 'url_tipificacion_carga_chasis',
                 'url_titulo_chasis', 'created_at', 'updated_at'
@@ -355,7 +407,7 @@ export const getInactiveChassis = async (req, res) => {
             .where('activo', false)
             .orderBy('fecha_de_baja', 'desc');
 
-        const chassisRaw = chassis.map(item => ({
+        const chassisRaw = chassis.map(item => withServiceData({
             ...item,
             info_completa: verificarInfoCompleta(item)
         }));
@@ -415,5 +467,50 @@ export const reactivateChassis = async (req, res) => {
     } catch (error) {
         logger.error({ event: 'reactivate_chassis_error', chassisId: id, error: error.message }, 'Error al reactivar chasis');
         res.status(500).json({ success: false, message: 'Error interno al reactivar el chasis.' });
+    }
+};
+
+export const registerChassisService = async (req, res) => {
+    const { id } = req.params;
+    const { fecha_service, observacion } = req.body || {};
+
+    try {
+        const chassis = await connection('chasis').where({ id }).first();
+        if (!chassis) {
+            return res.status(404).json({ success: false, message: 'Chasis no encontrado' });
+        }
+
+        if (!fecha_service) {
+            return res.status(400).json({ success: false, message: 'La fecha del service es obligatoria.' });
+        }
+
+        const kmActual = toFiniteNumberOrNull(chassis.km_actual) ?? toFiniteNumberOrNull(chassis.km_inicial) ?? 0;
+
+        await connection('chasis').where({ id }).update({
+            fecha_ultimo_service: fecha_service,
+            observacion_ultimo_service: observacion || null,
+            km_ultimo_service: kmActual,
+            updated_at: new Date(),
+        });
+
+        const updatedChassis = await connection('chasis').where({ id }).first();
+        const response = withServiceData({
+            ...updatedChassis,
+            info_completa: verificarInfoCompleta(updatedChassis)
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Service registrado correctamente.',
+            data: response
+        });
+    } catch (error) {
+        logger.error({
+            event: 'register_chassis_service_error',
+            id,
+            error: error.message,
+            stack: error.stack
+        }, 'Error al registrar service del chasis');
+        return res.status(500).json({ success: false, message: 'Error registrando el service del chasis.' });
     }
 };

@@ -21,6 +21,10 @@ const DECIMAL_INPUT_FIELDS = new Set([
   'fuel_amount',
   'fuel_km',
   'fuel_km_end',
+  'fuel_return_liters',
+  'fuel_return_amount',
+  'fuel_return_km',
+  'fuel_return_km_end',
 ]);
 
 const INTEGER_INPUT_FIELDS = new Set([]);
@@ -29,6 +33,7 @@ const CAMEL_CASE_FIELDS = new Set([
   'origin',
   'destination',
   'fuel_station',
+  'fuel_return_station',
   'special_notes',
   'advance_responsible',
 ]);
@@ -84,6 +89,13 @@ const formatDecimalInput = (value, { maxDecimals = 3 } = {}) => {
   }).format(parsed);
 };
 
+const formatEditableNumber = (value, { maxDecimals = 3 } = {}) => {
+  const parsed = parseLooseNumber(value);
+  if (Number.isNaN(parsed)) return '';
+  const fixed = Number(parsed.toFixed(maxDecimals));
+  return String(fixed).replace('.', ',');
+};
+
 const sanitizeDecimalInput = (value) => {
   const raw = String(value ?? '').replace(/\s+/g, '').replace(/[^\d,.-]/g, '');
   if (!raw) return '';
@@ -127,6 +139,29 @@ const formatTripDate = (value) => {
   return match ? `${match[3]}/${match[2]}/${match[1]}` : (raw || '-');
 };
 
+const REQUIRED_FIELDS = [
+  { key: 'travel_date', label: 'Fecha del viaje', tab: 'basic' },
+  { key: 'company_id', label: 'Empresa', tab: 'basic' },
+  { key: 'driver_id', label: 'Chofer', tab: 'basic' },
+  { key: 'chassis_id', label: 'Chasis', tab: 'basic' },
+  { key: 'origin', label: 'Origen', tab: 'logistics' },
+  { key: 'destination', label: 'Destino', tab: 'logistics' },
+];
+
+const getRequiredTravelFields = ({ isTarifa, isFijo }) => {
+  const fields = [...REQUIRED_FIELDS];
+  if (isTarifa) {
+    fields.push(
+      { key: 'tariff_value', label: 'Valor de tarifa', tab: 'billing' },
+      { key: 'net_value', label: 'Valor neto', tab: 'billing' },
+    );
+  }
+  if (isFijo) {
+    fields.push({ key: 'fixed_price', label: 'Precio fijo', tab: 'billing' });
+  }
+  return fields;
+};
+
 const normalizeDateYmd = (value) => String(value || '').trim().slice(0, 10);
 const getTodayLocalYmd = () => {
   const today = new Date();
@@ -165,6 +200,12 @@ const createEmptyFormData = () => ({
   fuel_km: '',
   fuel_km_end: '',
   fuel_invoice: '',
+  fuel_return_station: '',
+  fuel_return_liters: '',
+  fuel_return_amount: '',
+  fuel_return_km: '',
+  fuel_return_km_end: '',
+  fuel_return_invoice: '',
   liquidation_status: 'FALTA',
   invoice_status: 'FALTA',
   payment_status: 'DEBEN',
@@ -210,9 +251,12 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
   const [liquidationPreviewUrl, setLiquidationPreviewUrl] = useState(null);
   const [fuelInvoicePhoto, setFuelInvoicePhoto] = useState(null);
   const [fuelInvoicePhotoUrl, setFuelInvoicePhotoUrl] = useState(null);
+  const [fuelReturnInvoicePhoto, setFuelReturnInvoicePhoto] = useState(null);
+  const [fuelReturnInvoicePhotoUrl, setFuelReturnInvoicePhotoUrl] = useState(null);
   const [deleteInvoicePhoto, setDeleteInvoicePhoto] = useState(false);
   const [deleteLiquidationFile, setDeleteLiquidationFile] = useState(false);
   const [deleteFuelInvoicePhoto, setDeleteFuelInvoicePhoto] = useState(false);
+  const [deleteFuelReturnInvoicePhoto, setDeleteFuelReturnInvoicePhoto] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [multipleModeEnabled, setMultipleModeEnabled] = useState(false);
   const [selectedRelatedIds, setSelectedRelatedIds] = useState([]);
@@ -230,9 +274,12 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
       setLiquidationPreviewUrl(null);
       setFuelInvoicePhoto(null);
       setFuelInvoicePhotoUrl(null);
+      setFuelReturnInvoicePhoto(null);
+      setFuelReturnInvoicePhotoUrl(null);
       setDeleteInvoicePhoto(false);
       setDeleteLiquidationFile(false);
       setDeleteFuelInvoicePhoto(false);
+      setDeleteFuelReturnInvoicePhoto(false);
       setDataLoading(true);
 
       // Forzamos la recarga de datos para asegurar que estén frescos
@@ -264,27 +311,33 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
           coupled_id: travel.acoplado_id || '',
           origin: travel.origen || '',
           destination: travel.destino || '',
-          quantity_loaded: formatDecimalInput(travel.cantidad_cargada),
-          quantity_unloaded: formatDecimalInput(travel.cantidad_descargada),
+          quantity_loaded: formatEditableNumber(travel.cantidad_cargada),
+          quantity_unloaded: formatEditableNumber(travel.cantidad_descargada),
           receipt_number: travel.remito || '',
           route_sheet: travel.hoja_ruta || '',
           proforma_number: travel.numero_proforma || '',
           invoice_number: travel.numero_factura || '',
           invoice_date: travel.fecha_facturada || '',
           carta_de_porte: travel.carta_de_porte || '',
-          tariff_value: formatDecimalInput(travel.tarifa_valor),
-          net_value: formatDecimalInput(travel.valor_neto),
-          iva_value: formatDecimalInput(travel.valor_iva),
-          fixed_price: formatDecimalInput(travel.precio_fijo),
-          advance_amount: formatDecimalInput(travel.adelanto_monto),
+          tariff_value: formatEditableNumber(travel.tarifa_valor),
+          net_value: formatEditableNumber(travel.valor_neto, { maxDecimals: 2 }),
+          iva_value: formatEditableNumber(travel.valor_iva, { maxDecimals: 2 }),
+          fixed_price: formatEditableNumber(travel.precio_fijo),
+          advance_amount: formatEditableNumber(travel.adelanto_monto),
           advance_method: travel.adelanto_metodo || '',
           advance_responsible: travel.adelanto_responsable || '',
           fuel_station: travel.estacion_nombre || '',
-          fuel_liters: formatDecimalInput(travel.combustible_litros),
-          fuel_amount: formatDecimalInput(travel.combustible_monto),
-          fuel_km: formatDecimalInput(travel.combustible_km),
-          fuel_km_end: formatDecimalInput(travel.combustible_km_fin),
+          fuel_liters: formatEditableNumber(travel.combustible_litros),
+          fuel_amount: formatEditableNumber(travel.combustible_monto),
+          fuel_km: formatEditableNumber(travel.combustible_km),
+          fuel_km_end: formatEditableNumber(travel.combustible_km_fin),
           fuel_invoice: travel.factura_combustible || '',
+          fuel_return_station: travel.estacion_nombre_vuelta || '',
+          fuel_return_liters: formatEditableNumber(travel.combustible_litros_vuelta),
+          fuel_return_amount: formatEditableNumber(travel.combustible_monto_vuelta),
+          fuel_return_km: formatEditableNumber(travel.combustible_km_vuelta),
+          fuel_return_km_end: formatEditableNumber(travel.combustible_km_fin_vuelta),
+          fuel_return_invoice: travel.factura_combustible_vuelta || '',
           liquidation_status: travel.estado_liquidacion || 'FALTA',
           invoice_status: travel.estado_facturacion || 'FALTA',
           payment_status: travel.estado_pago || 'DEBEN',
@@ -300,6 +353,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
           setLiquidationPreviewUrl(travel.archivo_factura_liquidado);
         }
         if (travel.foto_factura_combustible) setFuelInvoicePhotoUrl(travel.foto_factura_combustible);
+        if (travel.foto_factura_combustible_vuelta) setFuelReturnInvoicePhotoUrl(travel.foto_factura_combustible_vuelta);
       } else {
         setFormData(createEmptyFormData());
       }
@@ -525,11 +579,53 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
     setDeleteFuelInvoicePhoto(false);
   };
 
+  const handleFuelReturnInvoicePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setFuelReturnInvoicePhoto(file);
+    setDeleteFuelReturnInvoicePhoto(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      const missingFields = getRequiredTravelFields({ isTarifa, isFijo })
+        .filter(({ key }) => String(formData[key] ?? '').trim().length === 0);
+
+      if (missingFields.length > 0) {
+        setActiveTab(missingFields[0].tab);
+        showErrorAlert(
+          'Campos obligatorios',
+          `Faltan completar:\n${missingFields.map((field) => `- ${field.label}`).join('\n')}`
+        );
+        setLoading(false);
+        return;
+      }
+
+      if (
+        kmInicioNum !== null && kmFinNum !== null &&
+        !Number.isNaN(kmInicioNum) && !Number.isNaN(kmFinNum) &&
+        kmFinNum < kmInicioNum
+      ) {
+        setActiveTab('fuel');
+        showErrorAlert('Kilometrajes inválidos', 'El KM al llegar debe ser mayor o igual al KM al cargar combustible.');
+        setLoading(false);
+        return;
+      }
+
+      if (
+        kmInicioVueltaNum !== null && kmFinVueltaNum !== null &&
+        !Number.isNaN(kmInicioVueltaNum) && !Number.isNaN(kmFinVueltaNum) &&
+        kmFinVueltaNum < kmInicioVueltaNum
+      ) {
+        setActiveTab('fuel');
+        showErrorAlert('Kilometrajes inválidos', 'El KM al llegar de vuelta debe ser mayor o igual al KM al cargar combustible de vuelta.');
+        setLoading(false);
+        return;
+      }
+
       const formDataToSend = new FormData();
       Object.keys(formData).forEach(key => {
         if (formData[key] !== '' && formData[key] !== null) {
@@ -555,9 +651,13 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
       if (fuelInvoicePhoto) {
         formDataToSend.append('foto_factura_combustible', fuelInvoicePhoto);
       }
+      if (fuelReturnInvoicePhoto) {
+        formDataToSend.append('foto_factura_combustible_vuelta', fuelReturnInvoicePhoto);
+      }
       if (deleteInvoicePhoto) formDataToSend.append('delete_invoice_photo', 'true');
       if (deleteLiquidationFile) formDataToSend.append('delete_liquidation_file', 'true');
       if (deleteFuelInvoicePhoto) formDataToSend.append('delete_fuel_invoice_photo', 'true');
+      if (deleteFuelReturnInvoicePhoto) formDataToSend.append('delete_fuel_return_invoice_photo', 'true');
 
       let success;
       if (travel) {
@@ -676,9 +776,12 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
     setLiquidationPreviewUrl(null);
     setFuelInvoicePhoto(null);
     setFuelInvoicePhotoUrl(null);
+    setFuelReturnInvoicePhoto(null);
+    setFuelReturnInvoicePhotoUrl(null);
     setDeleteInvoicePhoto(false);
     setDeleteLiquidationFile(false);
     setDeleteFuelInvoicePhoto(false);
+    setDeleteFuelReturnInvoicePhoto(false);
     setActiveTab('basic');
     setSelectedCompany(null);
     onClose();
@@ -691,12 +794,21 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
 
   const kmInicioNum = formData.fuel_km === '' ? null : parseEsNumber(formData.fuel_km);
   const kmFinNum = formData.fuel_km_end === '' ? null : parseEsNumber(formData.fuel_km_end);
+  const kmInicioVueltaNum = formData.fuel_return_km === '' ? null : parseEsNumber(formData.fuel_return_km);
+  const kmFinVueltaNum = formData.fuel_return_km_end === '' ? null : parseEsNumber(formData.fuel_return_km_end);
   const kmViaje = (kmInicioNum !== null && kmFinNum !== null && !Number.isNaN(kmInicioNum) && !Number.isNaN(kmFinNum))
     ? Math.max(0, kmFinNum - kmInicioNum)
     : null;
+  const kmViajeVuelta = (kmInicioVueltaNum !== null && kmFinVueltaNum !== null && !Number.isNaN(kmInicioVueltaNum) && !Number.isNaN(kmFinVueltaNum))
+    ? Math.max(0, kmFinVueltaNum - kmInicioVueltaNum)
+    : null;
   const litrosNum = formData.fuel_liters === '' ? null : parseEsNumber(formData.fuel_liters);
+  const litrosVueltaNum = formData.fuel_return_liters === '' ? null : parseEsNumber(formData.fuel_return_liters);
   const litrosPorKm = (kmViaje && litrosNum !== null && !Number.isNaN(litrosNum) && kmViaje > 0)
     ? (litrosNum / kmViaje)
+    : null;
+  const litrosPorKmVuelta = (kmViajeVuelta && litrosVueltaNum !== null && !Number.isNaN(litrosVueltaNum) && kmViajeVuelta > 0)
+    ? (litrosVueltaNum / kmViajeVuelta)
     : null;
   const esperado032 = kmViaje ? kmViaje * 0.32 : null;
   const esperado034 = kmViaje ? kmViaje * 0.34 : null;
@@ -711,6 +823,13 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
         minimumFractionDigits: 2,
         maximumFractionDigits: 3,
       }).format(litrosPorKm)}`;
+  const litrosPorKmVueltaDisplay =
+    litrosPorKmVuelta === null
+      ? ''
+      : `${new Intl.NumberFormat('es-AR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 3,
+      }).format(litrosPorKmVuelta)}`;
 
   const computeTripTotal = (item) => {
     const neto = Number(item?.valor_neto ?? item?.precio_fijo ?? 0);
@@ -807,7 +926,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
           
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <div className="travel-modal-body">
 
             {dataLoading ? (
@@ -824,24 +943,22 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                       <h3>Información General</h3>
                       <div className="form-row">
                         <div className="form-group">
-                          <label htmlFor="travel_date">Fecha del Viaje</label>
+                          <label htmlFor="travel_date">Fecha del Viaje *</label>
                           <input
                             type="date"
                             id="travel_date"
                             name="travel_date"
                             value={formData.travel_date}
                             onChange={handleChange}
-                            required
                           />
                         </div>
                         <div className="form-group">
-                          <label htmlFor="company_id">Empresa</label>
+                          <label htmlFor="company_id">Empresa *</label>
                           <select
                             id="company_id"
                             name="company_id"
                             value={formData.company_id}
                             onChange={handleChange}
-                            required
                           >
                             <option value="">Seleccione una empresa</option>
                             {companies.filter(c => c.activo).map(company => (
@@ -857,8 +974,8 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                     <div className="form-row-1">
                       {/* Chofer */}
                       <div className="form-group">
-                        <label htmlFor="driver_id">Chofer</label>
-                        <select id="driver_id" name="driver_id" value={formData.driver_id} onChange={handleChange} required>
+                        <label htmlFor="driver_id">Chofer *</label>
+                        <select id="driver_id" name="driver_id" value={formData.driver_id} onChange={handleChange}>
                           <option value="">Seleccione un chofer</option>
                           {/* 🔥 OJO: He quitado el filtro de 'COMPLETO' para que puedas ver todos tus choferes de prueba */}
                           {drivers.map(driver => (
@@ -870,8 +987,8 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                       </div>
                       {/* Chasis */}
                       <div className="form-group">
-                        <label htmlFor="chassis_id">Chasis</label>
-                        <select id="chassis_id" name="chassis_id" value={formData.chassis_id} onChange={handleChange} required>
+                        <label htmlFor="chassis_id">Chasis *</label>
+                        <select id="chassis_id" name="chassis_id" value={formData.chassis_id} onChange={handleChange}>
                           <option value="">Seleccione un chasis</option>
                           {/* 🔥 Filtro relajado, solo verificamos existencia */}
                           {chasis.map(item => (
@@ -904,7 +1021,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
 
                       <div className="form-row">
                         <div className="form-group">
-                          <label htmlFor="origin">Origen</label>
+                          <label htmlFor="origin">Origen *</label>
                           <input
                             type="text"
                             id="origin"
@@ -912,12 +1029,11 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                             value={formData.origin}
                             onChange={handleChange}
                             placeholder="Ciudad/Lugar de origen"
-                            required
                           />
                         </div>
 
                         <div className="form-group">
-                          <label htmlFor="destination">Destino</label>
+                          <label htmlFor="destination">Destino *</label>
                           <input
                             type="text"
                             id="destination"
@@ -925,7 +1041,6 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                             value={formData.destination}
                             onChange={handleChange}
                             placeholder="Ciudad/Lugar de destino"
-                            required
                           />
                         </div>
                       </div>
@@ -966,6 +1081,10 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                   <div className="tab-content">
                     <div className="form-section">
                       <h3>Combustible</h3>
+                      <div className="alert-info">
+                        ℹ️ Primero guardás el viaje de ida. Después, al editarlo, podés completar el combustible del viaje de vuelta.
+                      </div>
+                      <h3>Viaje de ida</h3>
                       <div className="form-row-1">
                         <div className="form-group">
                           <label htmlFor="fuel_station">Estación de Servicio</label>
@@ -1152,6 +1271,114 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                         </div>
                       )}
 
+                      <h3>Viaje de vuelta</h3>
+                      {!travel && (
+                        <div className="alert-info">
+                          ℹ️ El bloque de vuelta se habilita una vez que el viaje de ida ya fue guardado.
+                        </div>
+                      )}
+                      <fieldset disabled={!travel} style={{ border: 'none', padding: 0, margin: 0, opacity: travel ? 1 : 0.6 }}>
+                        <div className="form-row-1">
+                          <div className="form-group">
+                            <label htmlFor="fuel_return_station">Estación de Servicio Vuelta</label>
+                            <input type="text" id="fuel_return_station" name="fuel_return_station" value={formData.fuel_return_station} onChange={handleChange} placeholder="Nombre de la estación" />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="fuel_return_invoice">Numero de Factura Combustible Vuelta</label>
+                            <input type="text" id="fuel_return_invoice" name="fuel_return_invoice" value={formData.fuel_return_invoice} onChange={handleChange} placeholder="Número de factura del combustible" />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="foto_factura_combustible_vuelta">Foto Factura Combustible Vuelta</label>
+                            <input
+                              type="file"
+                              id="foto_factura_combustible_vuelta"
+                              name="foto_factura_combustible_vuelta"
+                              accept="image/*,application/pdf"
+                              onChange={handleFuelReturnInvoicePhotoChange}
+                              style={{ display: 'none' }}
+                            />
+                            <div className="travel-file-card-existing">
+                              <div className="travel-file-info">
+                                <span className="travel-file-icon">📄</span>
+                                <span>
+                                  {fuelReturnInvoicePhoto
+                                    ? `Nuevo: ${fuelReturnInvoicePhoto.name}`
+                                    : fuelReturnInvoicePhotoUrl && !deleteFuelReturnInvoicePhoto
+                                      ? 'Archivo cargado'
+                                      : 'Sin archivo'}
+                                </span>
+                              </div>
+                              <div className="travel-file-actions">
+                                <button
+                                  type="button"
+                                  className="travel-btn-mini view"
+                                  onClick={() => {
+                                    const url = fuelReturnInvoicePhotoUrl;
+                                    if (url && !deleteFuelReturnInvoicePhoto) window.open(url, '_blank');
+                                  }}
+                                  title="Ver"
+                                  disabled={!fuelReturnInvoicePhotoUrl || deleteFuelReturnInvoicePhoto}
+                                >
+                                  👁️
+                                </button>
+                                <button
+                                  type="button"
+                                  className="travel-btn-mini replace"
+                                  onClick={() => document.getElementById('foto_factura_combustible_vuelta')?.click()}
+                                  title="Editar"
+                                >
+                                  🔄
+                                </button>
+                                <button
+                                  type="button"
+                                  className="travel-btn-mini delete"
+                                  onClick={() => {
+                                    setFuelReturnInvoicePhoto(null);
+                                    if (fuelReturnInvoicePhotoUrl) setDeleteFuelReturnInvoicePhoto(true);
+                                  }}
+                                  title="Borrar"
+                                  disabled={!fuelReturnInvoicePhoto && (!fuelReturnInvoicePhotoUrl || deleteFuelReturnInvoicePhoto)}
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="fuel_return_liters">Litros de Combustible Vuelta</label>
+                            <input type="text" inputMode="decimal" id="fuel_return_liters" name="fuel_return_liters" value={formData.fuel_return_liters} onChange={handleChange} placeholder="0" />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="fuel_return_amount">Monto Combustible Vuelta</label>
+                            <input type="text" inputMode="decimal" id="fuel_return_amount" name="fuel_return_amount" value={formData.fuel_return_amount} onChange={handleChange} placeholder="0" />
+                          </div>
+                        </div>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="fuel_return_km">KM al Cargar Combustible Vuelta</label>
+                            <input type="text" inputMode="decimal" id="fuel_return_km" name="fuel_return_km" value={formData.fuel_return_km} onChange={handleChange} placeholder="Kilometraje" />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="fuel_return_km_end">KM al Llegar Vuelta</label>
+                            <input type="text" inputMode="decimal" id="fuel_return_km_end" name="fuel_return_km_end" value={formData.fuel_return_km_end} onChange={handleChange} placeholder="Kilometraje al llegar" />
+                          </div>
+                        </div>
+                        {(kmViajeVuelta !== null || litrosPorKmVuelta !== null) && (
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>KM del viaje de vuelta</label>
+                              <input type="text" value={kmViajeVuelta === null ? '' : formatDecimalInput(kmViajeVuelta, { maxDecimals: 2 })} disabled />
+                            </div>
+                            <div className="form-group">
+                              <label>Consumo vuelta</label>
+                              <input type="text" value={litrosPorKmVueltaDisplay} disabled />
+                            </div>
+                          </div>
+                        )}
+                      </fieldset>
+
                     </div>
                   </div>
                 )}
@@ -1234,7 +1461,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                           </div>
                           <div className="form-row-1">
                             <div className="form-group">
-                              <label htmlFor="tariff_value">Valor de Tarifa</label>
+                              <label htmlFor="tariff_value">Valor de Tarifa *</label>
                               <input
                                 type="text"
                                 inputMode="decimal"
@@ -1243,11 +1470,10 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                                 value={formData.tariff_value}
                                 onChange={handleChange}
                                 placeholder="0"
-                                required={isTarifa}
                               />
                             </div>
                             <div className="form-group">
-                              <label htmlFor="net_value">Valor Neto</label>
+                              <label htmlFor="net_value">Valor Neto *</label>
                               <input
                                 type="text"
                                 inputMode="decimal"
@@ -1256,7 +1482,6 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                                 value={formData.net_value}
                                 onChange={handleChange}
                                 placeholder="0"
-                                required={isTarifa}
                               />
                             </div>
 
@@ -1298,7 +1523,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                           </div>
                           <div className="form-row-1">
                             <div className="form-group">
-                              <label htmlFor="fixed_price">Precio Fijo</label>
+                              <label htmlFor="fixed_price">Precio Fijo *</label>
                               <input
                                 type="text"
                                 inputMode="decimal"
@@ -1307,7 +1532,6 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                                 value={formData.fixed_price}
                                 onChange={handleChange}
                                 placeholder="0"
-                                required={isFijo}
                               />
                             </div>
                             <div className="form-group">

@@ -28,11 +28,6 @@ const CoupledDetailModal = ({ isOpen, onClose, coupled }) => {
         }
     };
 
-    const formatNonExpiringDate = (dateString) => {
-        if (!dateString) return 'No vence';
-        return `${formatDate(dateString)} · No vence`;
-    };
-
     return (
         <div className="cdm-overlay" onClick={onClose}>
             <div className="cdm-content" onClick={(e) => e.stopPropagation()}>
@@ -87,9 +82,9 @@ const CoupledDetailModal = ({ isOpen, onClose, coupled }) => {
                         <h3 className="cdm-section-title">Documentación y vencimientos</h3>
                         <div className="cdm-grid">
                             {/* Cédula */}
-                             <div className={`cdm-card ${getVencimientoClass(coupled.estado_cedula_acoplado)}`}>
-                                <label>Cédula</label>
-                                <span>{formatDate(coupled.vencimiento_cedula_acoplado)}</span>
+                             <div className="cdm-card">
+                                <label>Doc. Cédula</label>
+                                <span>{coupled.url_cedula_acoplado ? 'Documento cargado' : 'No registra'}</span>
                                 {coupled.url_cedula_acoplado && (
                                     <button
                                         className="cdm-btn-link"
@@ -129,9 +124,9 @@ const CoupledDetailModal = ({ isOpen, onClose, coupled }) => {
                             </div>
 
                             {/* Tipificación */}
-                            <div className={`cdm-card ${getVencimientoClass(coupled.estado_tipificacion_carga_acoplado)}`}>
-                                <label>Tipificación</label>
-                                <span>{formatNonExpiringDate(coupled.vencimiento_tipificacion_carga_acoplado)}</span>
+                            <div className="cdm-card">
+                                <label>Doc. Tipificación</label>
+                                <span>{coupled.url_tipificacion_carga_acoplado ? 'Documento cargado' : 'No registra'}</span>
                                 {coupled.url_tipificacion_carga_acoplado && (
                                     <button
                                         className="cdm-btn-link"
@@ -143,9 +138,9 @@ const CoupledDetailModal = ({ isOpen, onClose, coupled }) => {
                             </div>
 
                             {/* Homologación */}
-                            <div className={`cdm-card ${getVencimientoClass(coupled.estado_homologacion_acoplado)}`}>
-                                <label>Homologación</label>
-                                <span>{formatNonExpiringDate(coupled.vencimiento_homologacion_acoplado)}</span>
+                            <div className="cdm-card">
+                                <label>Doc. Homologación</label>
+                                <span>{coupled.url_homologacion_acoplado ? 'Documento cargado' : 'No registra'}</span>
                                 {coupled.url_homologacion_acoplado && (
                                     <button
                                         className="cdm-btn-link"

@@ -18,6 +18,7 @@ export const LoginProvider = ({ children }) => {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   const hasCheckedRef = useRef(false);
+  const sessionExpiredHandledRef = useRef(false);
 
   /**
    * CHECK SESSION AL INICIAR (UNA SOLA VEZ)
@@ -67,6 +68,7 @@ export const LoginProvider = ({ children }) => {
       setUser(res.data.data.user);
       setIsAuthenticated(true);
       hasCheckedRef.current = true;
+      sessionExpiredHandledRef.current = false;
       return res.data;
     } catch (error) {
       setUser(null);
@@ -89,6 +91,7 @@ export const LoginProvider = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
       hasCheckedRef.current = true;
+      sessionExpiredHandledRef.current = false;
     }
   };
 
@@ -98,6 +101,8 @@ export const LoginProvider = ({ children }) => {
   useEffect(() => {
     const handleSessionExpired = () => {
       if (!isAuthenticated) return;
+      if (sessionExpiredHandledRef.current) return;
+      sessionExpiredHandledRef.current = true;
       logout();
       showErrorAlert('Sesión expirada', 'Volvé a iniciar sesión');
     };

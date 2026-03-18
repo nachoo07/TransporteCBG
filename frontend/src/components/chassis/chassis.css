@@ -115,6 +115,33 @@
     color: #92400e;
 }
 
+.fleet-service-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 88px;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.fleet-service-badge.service-al_dia {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.fleet-service-badge.service-proximo {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.fleet-service-badge.service-pendiente {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
 /* Semáforos (Luces de estado) */
 .traffic-light {
     display: inline-block;

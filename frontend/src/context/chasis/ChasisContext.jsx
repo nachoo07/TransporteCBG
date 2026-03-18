@@ -143,6 +143,31 @@ const ChasisProvider = ({ children }) => {
         }
     }, [isAuthenticated]);
 
+const registerChassisService = async (id, payload) => {
+    try {
+        const res = await client.put(`/chassis/service/${id}`, payload);
+        const updated = res.data.data || res.data;
+
+        setChasis((prev) =>
+            Array.isArray(prev) ? prev.map((item) => item.id === id ? { ...item, ...updated } : item) : []
+        );
+        setInactiveChasis((prev) =>
+            Array.isArray(prev) ? prev.map((item) => item.id === id ? { ...item, ...updated } : item) : []
+        );
+
+        await getChasis();
+        await getInactiveChasis();
+
+        showSuccessToast('Service registrado correctamente.');
+        return updated;
+    } catch (error) {
+        if (error?.isOffline) return null;
+        const msg = getErrorMsg(error, 'No se pudo registrar el service del chasis');
+        showErrorAlert('Error', msg);
+        return null;
+    }
+};
+
 const reactivateChasis = async (id) => {
 
     try {
@@ -184,7 +209,8 @@ return (
         createChasis,
         updateChasis,
         deleteChasis,
-        reactivateChasis
+        reactivateChasis,
+        registerChassisService
     }}>
         {children}
     </ChasisContext.Provider>

@@ -7,6 +7,7 @@ import {
   getAllChassis,
   getInactiveChassis,
   reactivateChassis,
+  registerChassisService,
 } from '../../controllers/chassis/chassis.controllers.js';
 import { upload } from '../../../files/cloudinary.js';
 import { verifyToken } from '../../middlewares/login/auth.middlewares.js';
@@ -28,6 +29,7 @@ router.get('/inactive', verifyToken, getInactiveChassis);
 router.post('/create', verifyToken, uploadFields, validateChassisFiles(), validateCreateChassis, createChassis);
 router.get('/:id', verifyToken, getChassisById);
 router.put('/update/:id', verifyToken, uploadFields, validateChassisFiles(), validateUpdateChassis, updateChassis);
+router.put('/service/:id', verifyToken, registerChassisService);
 router.delete('/delete/:id', verifyToken, deleteChassis);
 router.put('/reactivate/:id', verifyToken, reactivateChassis);
 export default router;

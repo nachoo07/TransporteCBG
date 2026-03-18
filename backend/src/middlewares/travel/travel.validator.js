@@ -1,27 +1,62 @@
 import Joi from 'joi';
 
+const withKmValidation = (schema) =>
+  schema.custom((value, helpers) => {
+    const kmInicio = value.fuel_km;
+    const kmFin = value.fuel_km_end;
+
+    if (
+      kmInicio !== undefined && kmInicio !== null && kmInicio !== '' &&
+      kmFin !== undefined && kmFin !== null && kmFin !== '' &&
+      Number(kmFin) < Number(kmInicio)
+    ) {
+      return helpers.error('any.invalid', {
+        message: 'El KM al llegar debe ser mayor o igual al KM al cargar combustible',
+        field: 'fuel_km_end',
+      });
+    }
+
+    const kmInicioVuelta = value.fuel_return_km;
+    const kmFinVuelta = value.fuel_return_km_end;
+
+    if (
+      kmInicioVuelta !== undefined && kmInicioVuelta !== null && kmInicioVuelta !== '' &&
+      kmFinVuelta !== undefined && kmFinVuelta !== null && kmFinVuelta !== '' &&
+      Number(kmFinVuelta) < Number(kmInicioVuelta)
+    ) {
+      return helpers.error('any.invalid', {
+        message: 'El KM al llegar de vuelta debe ser mayor o igual al KM al cargar combustible de vuelta',
+        field: 'fuel_return_km_end',
+      });
+    }
+
+    return value;
+  }).messages({
+    'any.invalid': '{{#message}}',
+  });
+
 // Esquema para creación de viaje
-const createTravelSchema = Joi.object({
+const createTravelSchema = withKmValidation(Joi.object({
   travel_date: Joi.date().iso().required().messages({
-    'date.base': 'Travel date must be a valid date',
-    'date.format': 'Travel date must be ISO format',
-    'any.required': 'Travel date is required'
+    'date.base': 'La fecha del viaje debe ser válida',
+    'date.format': 'La fecha del viaje debe tener formato válido',
+    'any.required': 'La fecha del viaje es obligatoria'
   }),
   
   driver_id: Joi.number().integer().positive().required().messages({
-    'number.base': 'Driver ID must be a number',
-    'any.required': 'Driver ID is required'
+    'number.base': 'Debe seleccionar un chofer',
+    'any.required': 'El chofer es obligatorio'
   }),
   
   chassis_id: Joi.number().integer().positive().required().messages({
-    'number.base': 'Chassis ID must be a number',
-    'any.required': 'Chassis ID is required'
+    'number.base': 'Debe seleccionar un chasis',
+    'any.required': 'El chasis es obligatorio'
   }),
   
   coupled_id: Joi.number().integer().positive().allow(null).optional(),
   company_id: Joi.number().integer().positive().required().messages({
-    'number.base': 'Company ID must be a number',
-    'any.required': 'Company ID is required'
+    'number.base': 'Debe seleccionar una empresa',
+    'any.required': 'La empresa es obligatoria'
   }),
 
   // Documentation
@@ -31,8 +66,14 @@ const createTravelSchema = Joi.object({
   special_notes: Joi.string().max(1000).optional(),
 
   // Logistics
-  origin: Joi.string().max(255).optional(),
-  destination: Joi.string().max(255).optional(),
+  origin: Joi.string().max(255).required().messages({
+    'string.empty': 'El origen es obligatorio',
+    'any.required': 'El origen es obligatorio'
+  }),
+  destination: Joi.string().max(255).required().messages({
+    'string.empty': 'El destino es obligatorio',
+    'any.required': 'El destino es obligatorio'
+  }),
   km_traveled: Joi.number().min(0).optional(),
   quantity_loaded: Joi.number().min(0).optional(),
   quantity_unloaded: Joi.number().min(0).optional(),
@@ -62,6 +103,12 @@ const createTravelSchema = Joi.object({
   fuel_km: Joi.number().min(0).allow(null).optional(),
   fuel_km_end: Joi.number().min(0).allow(null).optional(),
   fuel_invoice: Joi.string().max(255).allow(null).optional(),
+  fuel_return_station: Joi.string().max(255).optional(),
+  fuel_return_liters: Joi.number().min(0).optional(),
+  fuel_return_amount: Joi.number().min(0).optional(),
+  fuel_return_km: Joi.number().min(0).allow(null).optional(),
+  fuel_return_km_end: Joi.number().min(0).allow(null).optional(),
+  fuel_return_invoice: Joi.string().max(255).allow(null).optional(),
 
   // States
   liquidation_status: Joi.string().valid('FALTA', 'LIQUIDADO').optional(),
@@ -69,11 +116,11 @@ const createTravelSchema = Joi.object({
   invoice_status: Joi.string().valid('FALTA', 'FACTURADO').optional(),
   payment_status: Joi.string().valid('DEBEN', 'PAGADO').optional()
 }).min(3).messages({
-  'object.min': 'You must provide at least the required fields'
-});
+  'object.min': 'Debe completar los campos obligatorios'
+}));
 
 // Esquema para actualización: al menos un campo
-const updateTravelSchema = Joi.object({
+const updateTravelSchema = withKmValidation(Joi.object({
   travel_date: Joi.date().iso().optional(),
   driver_id: Joi.number().integer().positive().optional(),
   chassis_id: Joi.number().integer().positive().optional(),
@@ -113,6 +160,13 @@ const updateTravelSchema = Joi.object({
   fuel_km: Joi.number().min(0).allow(null).optional(),
   fuel_km_end: Joi.number().min(0).allow(null).optional(),
   fuel_invoice: Joi.string().max(255).allow(null).optional(),
+  fuel_return_station: Joi.string().max(255).optional(),
+  fuel_return_liters: Joi.number().min(0).optional(),
+  fuel_return_amount: Joi.number().min(0).optional(),
+  fuel_return_km: Joi.number().min(0).allow(null).optional(),
+  fuel_return_km_end: Joi.number().min(0).allow(null).optional(),
+  fuel_return_invoice: Joi.string().max(255).allow(null).optional(),
+  delete_fuel_return_invoice_photo: Joi.string().valid('true', 'false').optional(),
 
   liquidation_status: Joi.string().valid('FALTA', 'LIQUIDADO').optional(),
   payment_order: Joi.string().max(255).optional(),
@@ -120,8 +174,8 @@ const updateTravelSchema = Joi.object({
   payment_status: Joi.string().valid('DEBEN', 'PAGADO').optional(),
   general_status: Joi.string().valid('INCOMPLETO', 'COMPLETO').optional()
 }).min(1).messages({
-  'object.min': 'You must provide at least one field to update'
-});
+  'object.min': 'Debe enviar al menos un campo para actualizar'
+}));
 
 // Esquema para actualización masiva de docs/estados (multipart)
 const bulkDocsSchema = Joi.object({
@@ -155,7 +209,7 @@ export const validateCreateTravel = (req, res, next) => {
     }));
     return res.status(400).json({
       success: false,
-      message: 'Validation error',
+      message: 'Errores de validación',
       errors: messages
     });
   }
@@ -180,7 +234,7 @@ export const validateUpdateTravel = (req, res, next) => {
     }));
     return res.status(400).json({
       success: false,
-      message: 'Validation error',
+      message: 'Errores de validación',
       errors: messages
     });
   }

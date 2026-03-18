@@ -7,11 +7,8 @@ import { deleteFileFromCloudinary } from '../../../files/deleteFileCloudinary.js
 const verificarInfoCompleta = (coupled) => {
     const camposObligatorios = [
         coupled.Dominio_acoplado,
-        coupled.vencimiento_cedula_acoplado,
         coupled.vencimiento_vtv_acoplado,
         coupled.vencimiento_senasa_acoplado,
-        coupled.vencimiento_homologacion_acoplado,
-        coupled.vencimiento_tipificacion_carga_acoplado,
         coupled.url_cedula_acoplado,
         coupled.url_vtv_acoplado,
         coupled.url_senasa_acoplado,
@@ -167,7 +164,6 @@ export const createCoupled = async (req, res) => {
         const getUrl = (fieldName) => (files[fieldName] && files[fieldName].length > 0) ? files[fieldName][0].path : null;
 
         const estadoCalculado = calcularEstadoGeneral({
-            vencimiento_cedula: rawData.vencimiento_cedula_acoplado,
             vencimiento_vtv: rawData.vencimiento_vtv_acoplado,
             vencimiento_senasa: rawData.vencimiento_senasa_acoplado,
         });
@@ -291,7 +287,6 @@ export const updateCoupled = async (req, res) => {
         coupledToUpdate.vencimiento_homologacion_acoplado = resolver(rawData.vencimiento_homologacion_acoplado, currentCoupled.vencimiento_homologacion_acoplado);
 
         coupledToUpdate.estado_general = calcularEstadoGeneral({
-            vencimiento_cedula: coupledToUpdate.vencimiento_cedula_acoplado || currentCoupled.vencimiento_cedula_acoplado,
             vencimiento_vtv: coupledToUpdate.vencimiento_vtv_acoplado || currentCoupled.vencimiento_vtv_acoplado,
             vencimiento_senasa: coupledToUpdate.vencimiento_senasa_acoplado || currentCoupled.vencimiento_senasa_acoplado,
         });

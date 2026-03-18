@@ -2,38 +2,34 @@ import React, { useState, useEffect } from 'react';
 import './chassisFormModal.css';
 
 const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit, isSaving = false }) => {
-    
+
     // Helper para fechas
     const formatDateForInput = (isoString) => isoString ? isoString.split('T')[0] : '';
     const initialFormState = {
         Dominio_chasis: '',
-        
+        km_inicial: '',
+
         // Vencimientos
-        vencimiento_cedula_chasis: '',
         vencimiento_vtv_chasis: '',
         vencimiento_senasa_chasis: '',
-        vencimiento_tipificacion_carga_chasis: '',
-        vencimiento_homologacion_chasis: '',
     };
 
     const [formData, setFormData] = useState(initialFormState);
     const [files, setFiles] = useState({});
-    const [filesToDelete, setFilesToDelete] = useState({}); 
+    const [filesToDelete, setFilesToDelete] = useState({});
 
     useEffect(() => {
         if (isOpen) {
-            setFilesToDelete({}); 
-            setFiles({}); 
-            
+            setFilesToDelete({});
+            setFiles({});
+
             if (chassisToEdit) {
                 setFormData({
                     Dominio_chasis: chassisToEdit.Dominio_chasis || '',
-                    
-                    vencimiento_cedula_chasis: formatDateForInput(chassisToEdit.vencimiento_cedula_chasis),
+                    km_inicial: chassisToEdit.km_inicial ?? '',
+
                     vencimiento_vtv_chasis: formatDateForInput(chassisToEdit.vencimiento_vtv_chasis),
                     vencimiento_senasa_chasis: formatDateForInput(chassisToEdit.vencimiento_senasa_chasis),
-                    vencimiento_tipificacion_carga_chasis: formatDateForInput(chassisToEdit.vencimiento_tipificacion_carga_chasis),
-                    vencimiento_homologacion_chasis: formatDateForInput(chassisToEdit.vencimiento_homologacion_chasis),
                 });
             } else {
                 setFormData(initialFormState);
@@ -61,7 +57,7 @@ const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit, isSaving =
         setFilesToDelete(prev => ({ ...prev, [name]: true }));
         setFiles(prev => {
             const copy = { ...prev };
-            delete copy[name]; 
+            delete copy[name];
             return copy;
         });
     };
@@ -73,7 +69,7 @@ const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit, isSaving =
     const handleSubmit = (e) => {
         e.preventDefault();
         const dataToSend = new FormData();
-        
+
         // Datos texto
         Object.keys(formData).forEach(key => {
             if (formData[key] !== null && formData[key] !== undefined) dataToSend.append(key, formData[key]);
@@ -146,7 +142,7 @@ const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit, isSaving =
                         <div className="cfm-file-actions">
                             <button type="button" onClick={() => window.open(currentUrl, '_blank')} className="cfm-btn-mini view" title="Ver">👁️</button>
                             <label htmlFor={`file-${inputName}`} className="cfm-btn-mini replace" title="Cambiar">🔄</label>
-                        <button type="button" onClick={() => handleMarkDelete(inputName)} className="cfm-btn-mini delete" title="Eliminar">🗑️</button>
+                            <button type="button" onClick={() => handleMarkDelete(inputName)} className="cfm-btn-mini delete" title="Eliminar">🗑️</button>
                         </div>
                     </div>
                 )}
@@ -170,9 +166,9 @@ const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit, isSaving =
                 {/* INPUT MODERNO: Drag & Drop */}
                 {!hasCurrent && !newFile && !isDeleted && (
                     <FileDropZone
-                      inputId={`file-drag-${inputName}`}
-                      onFile={file => handleFileSelect(inputName, { target: { files: [file] } })}
-                      accept=".jpg,.jpeg,.png,.pdf"
+                        inputId={`file-drag-${inputName}`}
+                        onFile={file => handleFileSelect(inputName, { target: { files: [file] } })}
+                        accept=".jpg,.jpeg,.png,.pdf"
                     />
                 )}
 
@@ -197,93 +193,88 @@ const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit, isSaving =
                     <button onClick={onClose} className="cfm-close">&times;</button>
                 </div>
                 <div className="cfm-body">
-                <form onSubmit={handleSubmit}>
-                    
-                    {/* DOMINIO (PATENTE) */}
-                    <h4 className="cfm-section-title">Datos del Vehículo</h4>
-                    <div className="cfm-row">
-                        <div className="cfm-group">
-                            <label>Dominio (Patente) *</label>
-                            <input 
-                                type="text" 
-                                name="Dominio_chasis" 
-                                className="cfm-input patent-input" 
-                                placeholder="AA 123 BB"
-                                value={formData.Dominio_chasis} 
-                                onChange={(e) => setFormData({...formData, Dominio_chasis: e.target.value.toUpperCase()})} 
-                                required 
-                            />
+                    <form onSubmit={handleSubmit}>
+
+                        {/* DOMINIO (PATENTE) */}
+                        <h4 className="cfm-section-title">Datos del Vehículo</h4>
+                        <div className="cfm-row">
+                            <div className="cfm-group">
+                                <label>Dominio (Patente) *</label>
+                                <input
+                                    type="text"
+                                    name="Dominio_chasis"
+                                    className="cfm-input patent-input"
+                                    placeholder="AA 123 BB"
+                                    value={formData.Dominio_chasis}
+                                    onChange={(e) => setFormData({ ...formData, Dominio_chasis: e.target.value.toUpperCase() })}
+                                    required
+                                />
+                            </div>
+                            <div className="cfm-group">
+                                <label>Kilometraje inicial *</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.001"
+                                    name="km_inicial"
+                                    className="cfm-input"
+                                    placeholder="200000"
+                                    value={formData.km_inicial}
+                                    onChange={handleChange}
+                                    required
+                                />
+                               
+                            </div>
                         </div>
-                    </div>
 
-                    <h4 className="cfm-section-title">Documentación Obligatoria</h4>
+                        <h4 className="cfm-section-title">Documentación Obligatoria</h4>
 
-                    {/* CÉDULA + TÍTULO */}
-                    <div className="cfm-row">
-                        <div className="cfm-group">
-                            <label>Venc. Cédula *</label>
-                            <input type="date" name="vencimiento_cedula_chasis" className="cfm-input" value={formData.vencimiento_cedula_chasis} onChange={handleChange}  />
+                        <div className="cfm-row cfm-row-docs2">
+                            <FileControl label="Doc. Cédula" inputName="url_cedula_chasis" currentUrl={chassisToEdit?.url_cedula_chasis} />
+                            <FileControl label="Título del Automotor" inputName="url_titulo_chasis" currentUrl={chassisToEdit?.url_titulo_chasis} />
+                            <div className="cfm-group" />
                         </div>
-                        <FileControl label="Foto Cédula" inputName="url_cedula_chasis" currentUrl={chassisToEdit?.url_cedula_chasis} />
-                    </div>
 
-                    {/* VTV */}
-                    <div className="cfm-row">
-                        <div className="cfm-group">
-                            <label>Venc. VTV</label>
-                            <input type="date" name="vencimiento_vtv_chasis" className="cfm-input" value={formData.vencimiento_vtv_chasis} onChange={handleChange} />
+                        {/* VTV */}
+                        <div className="cfm-row">
+                            <div className="cfm-group">
+                                <label>Venc. VTV</label>
+                                <input type="date" name="vencimiento_vtv_chasis" className="cfm-input" value={formData.vencimiento_vtv_chasis} onChange={handleChange} />
+                            </div>
+                            <FileControl label="Certificado VTV" inputName="url_vtv_chasis" currentUrl={chassisToEdit?.url_vtv_chasis} />
                         </div>
-                        <FileControl label="Certificado VTV" inputName="url_vtv_chasis" currentUrl={chassisToEdit?.url_vtv_chasis} />
-                    </div>
 
-                       {/* TÍTULO (Solo archivo, no suele vencer) */}
-                    <div className="cfm-row single-col">
-                        <FileControl label="Título del Automotor" inputName="url_titulo_chasis" currentUrl={chassisToEdit?.url_titulo_chasis} />
-                    </div>
+                        <h4 className="cfm-section-title">Habilitaciones y Cargas</h4>
 
-                    <h4 className="cfm-section-title">Habilitaciones y Cargas</h4>
-
-                    {/* RUTA / SENASA */}
-                    <div className="cfm-row">
-                        <div className="cfm-group">
-                            <label>Venc. SENASA/Ruta</label>
-                            <input type="date" name="vencimiento_senasa_chasis" className="cfm-input" value={formData.vencimiento_senasa_chasis} onChange={handleChange} />
+                        {/* RUTA / SENASA */}
+                        <div className="cfm-row">
+                            <div className="cfm-group">
+                                <label>Venc. SENASA</label>
+                                <input type="date" name="vencimiento_senasa_chasis" className="cfm-input" value={formData.vencimiento_senasa_chasis} onChange={handleChange} />
+                            </div>
+                            <FileControl label="Certificado SENASA" inputName="url_senasa_chasis" currentUrl={chassisToEdit?.url_senasa_chasis} />
                         </div>
-                        <FileControl label="Certificado SENASA/Ruta" inputName="url_senasa_chasis" currentUrl={chassisToEdit?.url_senasa_chasis} />
-                    </div>
 
-                    {/* TIPIFICACIÓN */}
-                    <div className="cfm-row">
-                        <div className="cfm-group">
-                            <label>Venc. Tipificación</label>
-                            <input type="date" name="vencimiento_tipificacion_carga_chasis" className="cfm-input" value={formData.vencimiento_tipificacion_carga_chasis} onChange={handleChange}  />
+                        <div className="cfm-row cfm-row-docs3">
+                            <FileControl label="Doc. SENASA" inputName="url_senasa_chasis" currentUrl={chassisToEdit?.url_senasa_chasis} />
+                            <FileControl label="Doc. Tipificación" inputName="url_tipificacion_carga_chasis" currentUrl={chassisToEdit?.url_tipificacion_carga_chasis} />
+                            <FileControl label="Doc. Homologación" inputName="url_homologacion_chasis" currentUrl={chassisToEdit?.url_homologacion_chasis} />
                         </div>
-                        <FileControl label="Doc. Tipificación" inputName="url_tipificacion_carga_chasis" currentUrl={chassisToEdit?.url_tipificacion_carga_chasis} />
-                    </div>
 
-                    {/* HOMOLOGACIÓN */}
-                    <div className="cfm-row">
-                        <div className="cfm-group">
-                            <label>Venc. Homologación</label>
-                            <input type="date" name="vencimiento_homologacion_chasis" className="cfm-input" value={formData.vencimiento_homologacion_chasis} onChange={handleChange} />
+                        {isSaving && (
+                            <div className="cfm-saving-indicator">
+                                <div className="cfm-spinner"></div>
+                                <span>
+                                    {chassisToEdit ? 'Actualizando chasis…' : 'Creando chasis…'}
+                                </span>
+                            </div>
+                        )}
+
+                        <div className="cfm-actions">
+                            <button type="button" onClick={onClose} className="cfm-btn-cancel" disabled={isSaving}>Cancelar</button>
+                            <button type="submit" className="cfm-btn-save" disabled={isSaving}>{isSaving ? 'Guardando…' : chassisToEdit ? 'Actualizar Chasis' : 'Guardar Chasis'}</button>
                         </div>
-                        <FileControl label="Doc. Homologación" inputName="url_homologacion_chasis" currentUrl={chassisToEdit?.url_homologacion_chasis} />
-                    </div>
-
-                    {isSaving && (
-                      <div className="cfm-saving-indicator">
-                        <div className="cfm-spinner"></div>
-                        <span>
-                          {chassisToEdit ? 'Actualizando chasis…' : 'Creando chasis…'}
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="cfm-actions">
-                        <button type="button" onClick={onClose} className="cfm-btn-cancel" disabled={isSaving}>Cancelar</button>
-                        <button type="submit" className="cfm-btn-save" disabled={isSaving}>{isSaving ? 'Guardando…' : chassisToEdit ? 'Actualizar Chasis' : 'Guardar Chasis'}</button>
-                    </div>
-                </form>
+                    </form>
                 </div>
             </div>
         </div>
