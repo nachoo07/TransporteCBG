@@ -220,6 +220,11 @@ export const createDriver = async (req, res) => {
         };
 
         const [newDriverId] = await connection('choferes').insert(driverToSave);
+        const createdDriver = await connection('choferes').where({ id: newDriverId }).first();
+        const createdDriverWithStatus = {
+            ...createdDriver,
+            info_completa: verificarInfoCompleta(createdDriver)
+        };
 
         const duration = Date.now() - start;
         logger.info({ event: 'create_driver_success', driverId: newDriverId, duration: `${duration}ms` }, 'Conductor creado');
@@ -227,7 +232,7 @@ export const createDriver = async (req, res) => {
         res.status(201).json({
             success: true,
             message: 'Chofer creado exitosamente',
-            data: { id: newDriverId, ...driverToSave }
+            data: createdDriverWithStatus
         });
 
     } catch (error) {
@@ -344,13 +349,19 @@ export const updateDriver = async (req, res) => {
             await Promise.all(oldFilesToDelete.map(url => deleteFileFromCloudinary(url)));
         }
 
+        const updatedDriver = await connection('choferes').where({ id }).first();
+        const updatedDriverWithStatus = {
+            ...updatedDriver,
+            info_completa: verificarInfoCompleta(updatedDriver)
+        };
+
         const duration = Date.now() - start;
         logger.info({ event: 'update_driver_success', driverId: id, duration: `${duration}ms` }, 'Actualización exitosa');
 
         res.status(200).json({
             success: true,
             message: 'Conductor actualizado exitosamente',
-            data: driverToUpdate
+            data: updatedDriverWithStatus
         });
 
     } catch (error) {

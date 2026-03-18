@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './coupledFormModal.css';
 
-const CoupledFormModal = ({isOpen, onClose, onSubmit, coupledToEdit }) => {
+const CoupledFormModal = ({isOpen, onClose, onSubmit, coupledToEdit, isSaving = false }) => {
 
       const formatDateForInput = (isoString) => isoString ? isoString.split('T')[0] : '';
 
@@ -271,9 +271,18 @@ return (
                         <FileControl label="Doc. Homologación" inputName="url_homologacion_acoplado" currentUrl={coupledToEdit?.url_homologacion_acoplado} />
                     </div>
 
+                    {isSaving && (
+                      <div className="cfm-saving-indicator">
+                        <div className="cfm-spinner"></div>
+                        <span>
+                          {coupledToEdit ? 'Actualizando acoplado…' : 'Creando acoplado…'}
+                        </span>
+                      </div>
+                    )}
+
                     <div className="cfm-actions">
-                        <button type="button" onClick={onClose} className="cfm-btn-cancel">Cancelar</button>
-                        <button type="submit" className="cfm-btn-save">{coupledToEdit ? 'Actualizar Acoplado' : 'Guardar Acoplado'}</button>
+                        <button type="button" onClick={onClose} className="cfm-btn-cancel" disabled={isSaving}>Cancelar</button>
+                        <button type="submit" className="cfm-btn-save" disabled={isSaving}>{isSaving ? 'Guardando…' : coupledToEdit ? 'Actualizar Acoplado' : 'Guardar Acoplado'}</button>
                     </div>
                 </form>
                 </div>

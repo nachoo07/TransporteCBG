@@ -38,6 +38,28 @@
   background: #f79a3e;
 }
 
+.fleet-toolbar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.55rem;
+}
+
+.fleet-search-wrap {
+    display: flex;
+    align-items: center;
+}
+
+.fleet-search-input {
+    width: 300px;
+}
+
+.fleet-actions-header {
+    width: auto;
+    margin-bottom: 0;
+}
+
 /* Contenedor de la Tabla (Tarjeta Blanca) */
 .table-wrapper {
     background-color: #ffffff;
@@ -71,8 +93,26 @@
     font-size: 0.95rem;
 }
 
-.chassis-table tr:hover {
-    background-color: #f8fafc; /* Efecto hover en las filas */
+.fleet-info-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.fleet-info-badge.is-complete {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.fleet-info-badge.is-missing {
+    background-color: #fef3c7;
+    color: #92400e;
 }
 
 /* Semáforos (Luces de estado) */
@@ -310,10 +350,68 @@
 /* PESTAÑAS (Tabs) */
 .tabs-container {
     display: flex;
-    justify-content: space-between;
     gap: 0;
-    margin-bottom: 1.5rem;
-    border-bottom: 2px solid #e5e7eb;
+}
+
+.fleet-tabs-row {
+    justify-content: flex-start;
+    margin-bottom: 1rem;
+}
+
+.fleet-tabs-group {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.fleet-control-panel {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 1rem 1rem 1.1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.fleet-control-header {
+    margin-bottom: 0.85rem;
+}
+
+.fleet-control-title {
+    display: inline-block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.fleet-toolbar-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: space-between;
+}
+
+.fleet-search-wrap-wide {
+    flex: 1.35;
+    min-width: 0;
+}
+
+.fleet-search-input {
+    width: 100%;
+    min-width: 320px;
+}
+
+.fleet-tabs-segmented {
+    background: #eef2f7;
+    border-radius: 16px;
+    padding: 0;
+    gap: 0.25rem;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
 }
 
 .tab-button {
@@ -321,11 +419,11 @@
     background: none;
     border: none;
     border-bottom: 3px solid transparent;
-    color: #6b7280;
-    font-size: 1rem;
+    color: #1f2937;
+    font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: color 0.18s ease, border 0.18s ease;
 }
 
 .tab-button:hover {
@@ -337,10 +435,151 @@
     border-bottom-color: #2563eb;
 }
 
+.fleet-tab-button {
+    border-radius: 0;
+    border-bottom: none;
+    padding: 0.82rem 1.15rem;
+    color: #6b7280;
+    font-size: 0.92rem;
+    min-height: 48px;
+}
+
+.fleet-tab-button.active {
+    color: #111827;
+    background: #ffffff;
+    border-bottom-color: transparent;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+.fleet-table-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 290px);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #fffaf5 100%);
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 24px rgba(255, 144, 32, 0.08);
+    overflow: hidden;
+}
+
 /* FILAS INACTIVAS */
 .inactive-row {
     opacity: 0.6;
     background-color: #f9fafb;
+}
+
+.table-responsive {
+    background-color: transparent;
+    border-radius: 0;
+    border: 0;
+    border-top: 4px solid #ff9020;
+    overflow-x: auto;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.fleet-table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.fleet-table th {
+    background: linear-gradient(180deg, #fff7ed 0%, #fffbf5 100%);
+    padding: 0.95rem 0.9rem;
+    text-align: center;
+    font-weight: 700;
+    color: #9a3412;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    white-space: nowrap;
+}
+
+.fleet-table td {
+    padding: 0.9rem;
+    border-bottom: 1px solid #e5e7eb;
+    color: #1f2937;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+
+.btn-action-chassis {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    transition: transform 0.2s;
+    color: #9ca3af;
+    font-size: 20px;
+    margin: 0px 3px;
+}
+
+.btn-action-chassis:hover {
+    transform: scale(1.1);
+    background: #fff;
+    box-shadow: 0 0 0 2px #FF9020, 0 2px 8px rgba(0,0,0,0.08);
+    border-radius: 6px;
+    outline: none;
+}
+
+.fleet-table-active th,
+.fleet-table-active td {
+    width: 25%;
+}
+
+.fleet-table-archived th,
+.fleet-table-archived td {
+    width: 20%;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 4px;
+    border-radius: 4px;
+    transition: transform 0.18s ease, color 0.18s ease, background 0.18s ease;
+    margin-right: 0;
+    color: #9ca3af;
+}
+
+.action-btn:hover {
+    background-color: #f3f4f6;
+    transform: scale(1.08);
+}
+
+.action-btn.view:hover {
+    color: #0284c7;
+}
+
+.action-btn.edit:hover {
+    color: #2563eb;
+}
+
+.action-btn.delete:hover {
+    color: #c2410c;
+}
+
+.empty-msg {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.fleet-table-footer {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 1rem 1.15rem;
+    border-top: 1px solid #f3f4f6;
+    background: linear-gradient(180deg, rgba(255, 247, 237, 0.45) 0%, rgba(255, 255, 255, 0.95) 100%);
 }
 
 /* MODALES */
@@ -470,13 +709,51 @@
     color: white;
 }
 
+@media (max-width: 768px) {
+    .fleet-toolbar-top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .fleet-toolbar-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .fleet-search-input,
+    .fleet-actions-header,
+    .fleet-actions-header .btn-add-chassis,
+    .fleet-tabs-segmented {
+        width: 100%;
+    }
+
+    .fleet-tabs-group {
+        width: 100%;
+    }
+
+    .fleet-tabs-group .tab-button {
+        flex: 1;
+        min-width: 0;
+        padding: 12px 0px;
+    }
+
+    .table-responsive {
+        max-height: none;
+    }
+
+    .fleet-table-shell {
+        min-height: auto;
+    }
+}
+
 /* PAGINACIÓN CHASIS */
 .chassis-pagination {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 0.25rem;
-  margin: 1.5rem 0 0.5rem 0;
+  margin: 0;
+  flex-wrap: wrap;
 }
 .chassis-pagination-btn {
   background: #fff;

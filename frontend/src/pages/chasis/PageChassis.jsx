@@ -18,15 +18,15 @@ const PageChassis = () => {
                 </div>
 
                 {/* --- ZONA DE PESTAÑAS (TABS) --- */}
-                <div className="fleet-tabs">
+                <div className="fleet-tabs fleet-tabs-segmented-main">
                     <button 
-                        className={`tab-btn ${activeTab === 'chassis' ? 'active' : ''}`}
+                        className={`tab-btn fleet-main-tab-btn ${activeTab === 'chassis' ? 'active' : ''}`}
                         onClick={() => setActiveTab('chassis')}
                     >
                         🚛 Chasis
                     </button>
                     <button 
-                        className={`tab-btn ${activeTab === 'coupled' ? 'active' : ''}`}
+                        className={`tab-btn fleet-main-tab-btn ${activeTab === 'coupled' ? 'active' : ''}`}
                         onClick={() => setActiveTab('coupled')}
                     >
                         🛒 Acoplados

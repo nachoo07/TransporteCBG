@@ -75,6 +75,7 @@ const PanelUsers = () => {
   );
 
   const baseList = activeTab === 'activos' ? activeUsers : inactiveUsers;
+  const visibleUsers = paginated(baseList);
   const totalPages = Math.ceil(baseList.length / itemsPerPage);
 
   React.useEffect(() => { setCurrentPage(1); }, [activeTab, search]);
@@ -86,7 +87,7 @@ const PanelUsers = () => {
       <div className="driver-container">
         
         {/* CABECERA */}
-        <div className="driver-header">
+        <div className="driver-header users-header">
           <div className="driver-title">
             <h1>🔐 Usuarios</h1>
           </div>
@@ -98,36 +99,42 @@ const PanelUsers = () => {
         {/* TABLA */}
         {!loading && (
           <>
-          <div className="driver-tabs">
-            <div>
-              <button
-                className={`tab-btn ${activeTab === 'activos' ? 'active' : ''}`}
-                onClick={() => setActiveTab('activos')}
-              >
-                👤 Activos ({activeUsers.length})
-              </button>
-              <button
-                className={`tab-btn ${activeTab === 'inactivos' ? 'active' : ''}`}
-                onClick={() => setActiveTab('inactivos')}
-              >
-                📦 Inactivos ({inactiveUsers.length})
-              </button>
+          <div className="users-control-panel">
+            <div className="users-control-header">
+              <span className="users-control-title">Gestión de usuarios</span>
             </div>
 
-            <div>
-              <input
-                type="text"
-                className="driver-search-input"
-                placeholder="Buscar por nombre o usuario..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+            <div className="users-toolbar-row">
+              <div className="users-tabs-group users-tabs-segmented">
+                <button
+                  className={`tab-btn users-tab-btn ${activeTab === 'activos' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('activos')}
+                >
+                  Activos ({activeUsers.length})
+                </button>
+                <button
+                  className={`tab-btn users-tab-btn ${activeTab === 'inactivos' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('inactivos')}
+                >
+                  Inactivos ({inactiveUsers.length})
+                </button>
+              </div>
 
-            <div className="driver-header-actions">
-              <button onClick={handleOpenCreate} className="btn-add-driver subtle">
-                ➕ Nuevo Usuario
-              </button>
+              <div className="users-search-wrap">
+                <input
+                  type="text"
+                  className="driver-search-input users-search-input"
+                  placeholder="Buscar usuario..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="driver-header-actions users-header-actions">
+                <button onClick={handleOpenCreate} className="btn-add-driver subtle users-add-btn">
+                  ➕ Nuevo Usuario
+                </button>
+              </div>
             </div>
           </div>
 
@@ -143,7 +150,7 @@ const PanelUsers = () => {
               </thead>
               <tbody>
                 {baseList.length > 0 ? (
-                  paginated(baseList).map((user) => (
+                  visibleUsers.map((user) => (
                     <tr key={user.id}>
                       <td>
                         <div className="user-cell">

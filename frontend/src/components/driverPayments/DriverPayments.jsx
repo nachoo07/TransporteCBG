@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Button,
+  Checkbox,
+  ClickAwayListener,
   Dialog,
   DialogActions,
   DialogContent,
@@ -10,17 +12,17 @@ import {
   IconButton,
   InputLabel,
   MenuItem,
+  Paper,
+  Popper,
   Select,
   TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
-import { Edit as EditIcon } from '@mui/icons-material';
+import { Edit as EditIcon, FilterAltOutlined as FilterAltOutlinedIcon } from '@mui/icons-material';
 import { MaterialReactTable, useMaterialReactTable } from 'material-react-table';
 import { MRT_Localization_ES } from 'material-react-table/locales/es';
-
 import client from '../../api/axios';
-import Navbar from '../navbar/Navbar';
 import { useAuth } from '../../context/login/LoginContext';
 import { showErrorAlert, showSuccessToast } from '../../utils/alerts/Alerts';
 import { getErrorMsg } from '../../utils/helperError/ErrorMsg';
@@ -110,6 +112,27 @@ const formatDate = (date) => {
   return new Date(date).toLocaleDateString('es-AR');
 };
 
+const getDriverPaymentBase = (row) => {
+  const tipo = row?.pago?.tipo || 'PORCENTAJE';
+  if (tipo === 'FIJO') {
+    const fixed = Number(row?.pago?.precio_fijo);
+    return Number.isNaN(fixed) ? null : fixed;
+  }
+
+  const tripValue = Number(row?.valor_viaje_neto ?? 0);
+  const pct = Number(row?.pago?.porcentaje);
+  if (Number.isNaN(tripValue) || Number.isNaN(pct)) return null;
+  return (tripValue * pct) / 100;
+};
+
+const getDriverPaymentFinal = (row) => {
+  const base = getDriverPaymentBase(row);
+  if (base === null) return null;
+  const ajustes = Number(row?.pago?.ajustes_total ?? 0);
+  const adelanto = Number(row?.adelanto_monto ?? row?.pago?.adelanto_monto ?? 0);
+  return base + (Number.isNaN(ajustes) ? 0 : ajustes) - (Number.isNaN(adelanto) ? 0 : adelanto);
+};
+
 const DriverPayments = () => {
   const { isAuthenticated, isOffline } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -117,6 +140,14 @@ const DriverPayments = () => {
   const today = useMemo(() => new Date(), []);
   const [monthFilter, setMonthFilter] = useState(String(today.getMonth() + 1).padStart(2, '0'));
   const [yearFilter, setYearFilter] = useState(String(today.getFullYear()));
+  const [headerFilters, setHeaderFilters] = useState({});
+  const [filterPopover, setFilterPopover] = useState({
+    anchorEl: null,
+    columnId: '',
+    label: '',
+    search: '',
+    draftValues: [],
+  });
 
   // Modal: Config (Porcentaje / Fijo)
   const [configOpen, setConfigOpen] = useState(false);
@@ -257,24 +288,138 @@ const DriverPayments = () => {
     return Array.from(years).sort((a, b) => Number(b) - Number(a));
   }, [rows, today]);
 
-  const uniqueSorted = (values) =>
+  const normalizeHeaderFilterValue = useCallback((value) => (
+    String(value ?? '')
+      .trim()
+      .toLocaleLowerCase('es-AR')
+  ), []);
+
+  const uniqueSorted = useCallback((values) => (
     Array.from(
       new Set(values.map((value) => String(value || '').trim()).filter((value) => value.length > 0 && value !== '-'))
-    ).sort((a, b) => a.localeCompare(b, 'es'));
+    ).sort((a, b) => a.localeCompare(b, 'es'))
+  ), []);
 
-  const columnFilterOptions = useMemo(() => {
-    const source = Array.isArray(periodFilteredRows) ? periodFilteredRows : [];
-    return {
-      choferes: uniqueSorted(source.map((row) => toCamelCaseWords(row.driver_fullname))),
-      empresas: uniqueSorted(source.map((row) => toCamelCaseWords(row.company_name))),
-      docs: uniqueSorted(
-        source.map((row) => [row.remito, row.hoja_ruta, row.numero_proforma].filter(Boolean).join(' / '))
-      ),
-      origenes: uniqueSorted(source.map((row) => toCamelCaseWords(row.origen))),
-      destinos: uniqueSorted(source.map((row) => toCamelCaseWords(row.destino))),
-      tipoPago: uniqueSorted(source.map((row) => row.pago?.tipo || 'PORCENTAJE')),
-    };
-  }, [periodFilteredRows]);
+  const getHeaderFilterLabel = useCallback((row, columnId) => {
+    switch (columnId) {
+      case 'driver_fullname':
+        return toCamelCaseWords(row.driver_fullname);
+      case 'company_name':
+        return toCamelCaseWords(row.company_name);
+      case 'docs':
+        return [row.remito, row.hoja_ruta, row.numero_proforma].filter(Boolean).join(' / ') || '-';
+      case 'fecha_viaje':
+        return formatDate(row.fecha_viaje);
+      case 'origen':
+        return toCamelCaseWords(row.origen);
+      case 'destino':
+        return toCamelCaseWords(row.destino);
+      case 'config_pago': {
+        const tipo = row.pago?.tipo || 'PORCENTAJE';
+        if (tipo === 'FIJO') {
+          return row.pago?.precio_fijo !== null && row.pago?.precio_fijo !== undefined
+            ? formatCurrency(row.pago?.precio_fijo)
+            : 'Sin definir';
+        }
+        return row.pago?.porcentaje !== null && row.pago?.porcentaje !== undefined
+          ? `${row.pago?.porcentaje}%`
+          : 'Sin definir';
+      }
+      default:
+        return formatText(row?.[columnId]);
+    }
+  }, []);
+
+  const filteredRows = useMemo(() => {
+    const activeFilters = Object.entries(headerFilters).filter(([, values]) => Array.isArray(values) && values.length > 0);
+    if (activeFilters.length === 0) return periodFilteredRows;
+
+    return periodFilteredRows.filter((row) => (
+      activeFilters.every(([columnId, values]) => {
+        const rowLabel = getHeaderFilterLabel(row, columnId);
+        const currentValue = normalizeHeaderFilterValue(rowLabel);
+        return values.includes(currentValue);
+      })
+    ));
+  }, [periodFilteredRows, headerFilters, getHeaderFilterLabel, normalizeHeaderFilterValue]);
+
+  const currentHeaderFilterOptions = useMemo(() => {
+    if (!filterPopover.columnId) return [];
+
+    return uniqueSorted(
+      periodFilteredRows.map((row) => getHeaderFilterLabel(row, filterPopover.columnId)),
+    ).map((label) => ({
+      label,
+      value: normalizeHeaderFilterValue(label),
+    }));
+  }, [periodFilteredRows, filterPopover.columnId, getHeaderFilterLabel, normalizeHeaderFilterValue, uniqueSorted]);
+
+  const openHeaderFilter = useCallback((event, columnId, label) => {
+    event.stopPropagation();
+    setFilterPopover({
+      anchorEl: event.currentTarget,
+      columnId,
+      label,
+      search: '',
+      draftValues: Array.isArray(headerFilters[columnId]) ? [...headerFilters[columnId]] : [],
+    });
+  }, [headerFilters]);
+
+  const closeHeaderFilter = useCallback(() => {
+    setFilterPopover({
+      anchorEl: null,
+      columnId: '',
+      label: '',
+      search: '',
+      draftValues: [],
+    });
+  }, []);
+
+  const handleClearHeaderFilter = useCallback(() => {
+    if (!filterPopover.columnId) return;
+    setHeaderFilters((prev) => {
+      const next = { ...prev };
+      delete next[filterPopover.columnId];
+      return next;
+    });
+    closeHeaderFilter();
+  }, [closeHeaderFilter, filterPopover.columnId]);
+
+  const handleApplyHeaderFilter = useCallback(() => {
+    if (!filterPopover.columnId) return;
+    setHeaderFilters((prev) => {
+      const next = { ...prev };
+      if (filterPopover.draftValues.length === 0) {
+        delete next[filterPopover.columnId];
+      } else {
+        next[filterPopover.columnId] = filterPopover.draftValues;
+      }
+      return next;
+    });
+    closeHeaderFilter();
+  }, [closeHeaderFilter, filterPopover.columnId, filterPopover.draftValues]);
+
+  const renderHeaderWithFilter = useCallback((label, columnId) => (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+      <span>{label}</span>
+      <IconButton
+        size="small"
+        onClick={(event) => openHeaderFilter(event, columnId, label)}
+        sx={{
+          color: Array.isArray(headerFilters[columnId]) && headerFilters[columnId].length > 0 ? '#FF9020' : '#9ca3af',
+          p: '2px',
+        }}
+      >
+        <FilterAltOutlinedIcon fontSize="inherit" />
+      </IconButton>
+    </Box>
+  ), [headerFilters, openHeaderFilter]);
+
+  const visibleHeaderFilterOptions = useMemo(() => {
+    const search = filterPopover.search.trim().toLocaleLowerCase('es-AR');
+    if (!search) return currentHeaderFilterOptions;
+    return currentHeaderFilterOptions.filter((option) => option.label.toLocaleLowerCase('es-AR').includes(search));
+  }, [currentHeaderFilterOptions, filterPopover.search]);
 
   const columns = useMemo(
     () => [
@@ -282,32 +427,27 @@ const DriverPayments = () => {
         id: 'driver_fullname',
         accessorFn: (row) => toCamelCaseWords(row.driver_fullname),
         header: 'Chofer',
+        Header: () => renderHeaderWithFilter('Chofer', 'driver_fullname'),
         size: 120,
-        filterVariant: 'select',
-        filterFn: 'equals',
-        filterSelectOptions: columnFilterOptions.choferes,
       },
       {
         id: 'company_name',
         accessorFn: (row) => toCamelCaseWords(row.company_name),
         header: 'Empresa',
+        Header: () => renderHeaderWithFilter('Empresa', 'company_name'),
         size: 160,
-        filterVariant: 'select',
-        filterFn: 'equals',
-        filterSelectOptions: columnFilterOptions.empresas,
       },
       {
         id: 'docs',
         header: 'Remito / HR / Proforma',
+        Header: () => renderHeaderWithFilter('Remito / HR / Proforma', 'docs'),
         accessorFn: (r) => [r.remito, r.hoja_ruta, r.numero_proforma].filter(Boolean).join(' / '),
         size: 220,
-        filterVariant: 'select',
-        filterFn: 'equals',
-        filterSelectOptions: columnFilterOptions.docs,
       },
       {
         accessorKey: 'fecha_viaje',
         header: 'Fecha de viaje',
+        Header: () => renderHeaderWithFilter('Fecha de viaje', 'fecha_viaje'),
         size: 120,
         Cell: ({ cell }) => formatDate(cell.getValue()),
       },
@@ -315,19 +455,15 @@ const DriverPayments = () => {
         id: 'origen',
         accessorFn: (row) => toCamelCaseWords(row.origen),
         header: 'Desde',
+        Header: () => renderHeaderWithFilter('Desde', 'origen'),
         size: 140,
-        filterVariant: 'select',
-        filterFn: 'equals',
-        filterSelectOptions: columnFilterOptions.origenes,
       },
       {
         id: 'destino',
         accessorFn: (row) => toCamelCaseWords(row.destino),
         header: 'Hasta',
+        Header: () => renderHeaderWithFilter('Hasta', 'destino'),
         size: 140,
-        filterVariant: 'select',
-        filterFn: 'equals',
-        filterSelectOptions: columnFilterOptions.destinos,
       },
       {
         accessorKey: 'cantidad_cargada',
@@ -350,15 +486,13 @@ const DriverPayments = () => {
       {
         id: 'config_pago',
         header: '% / Precio fijo',
+        Header: () => renderHeaderWithFilter('% / Precio fijo', 'config_pago'),
         size: 140,
         accessorFn: (r) => {
           const tipo = r.pago?.tipo;
           if (tipo === 'FIJO') return r.pago?.precio_fijo ?? null;
           return r.pago?.porcentaje ?? null;
         },
-        filterVariant: 'select',
-        filterFn: 'equals',
-        filterSelectOptions: columnFilterOptions.tipoPago,
         Cell: ({ row }) => {
           const tipo = row.original.pago?.tipo || 'PORCENTAJE';
           const label =
@@ -407,46 +541,39 @@ const DriverPayments = () => {
         id: 'final',
         header: 'Valor final',
         size: 120,
-        accessorFn: (r) => r.pago?.pago_final ?? null,
+        accessorFn: (r) => getDriverPaymentFinal(r),
         Cell: ({ row }) => {
-          const explicitValue = row.original.pago?.pago_final;
-          const base = Number(row.original.pago?.pago_base ?? 0);
-          const ajustes = Number(row.original.pago?.ajustes_total ?? 0);
-          const adelanto = Number(row.original.adelanto_monto ?? row.original.pago?.adelanto_monto ?? 0);
-          const calculated = Number.isNaN(base) ? null : base + (Number.isNaN(ajustes) ? 0 : ajustes) - (Number.isNaN(adelanto) ? 0 : adelanto);
-          const value = explicitValue === null || explicitValue === undefined ? calculated : explicitValue;
+          const value = getDriverPaymentFinal(row.original);
           return <strong>{value === null ? '-' : formatCurrency(value)}</strong>;
         },
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [columnFilterOptions]
+    [renderHeaderWithFilter]
   );
 
   const table = useMaterialReactTable({
     columns,
-    data: periodFilteredRows,
+    data: filteredRows,
     localization: MRT_Localization_ES,
     state: { isLoading: loading },
     enableRowSelection: true,
     defaultColumn: {
       Cell: ({ cell }) => formatText(cell.getValue()),
     },
-    columnFilterDisplayMode: 'popover',
-    enableColumnFilters: true,
-    enableFilters: true,
-    enableGlobalFilter: true,
+    enableColumnFilters: false,
+    enableFilters: false,
+    enableGlobalFilter: false,
+    enableSorting: false,
+    enableColumnOrdering: false,
     enableDensityToggle: false,
     enableFullScreenToggle: false,
-    initialState: { density: 'compact', showColumnFilters: true },
-    muiFilterTextFieldProps: {
-      variant: 'outlined',
-      size: 'small',
-      SelectProps: { defaultOpen: true },
-    },
+    autoResetPageIndex: false,
+    paginationDisplayMode: 'pages',
+    initialState: { density: 'compact' },
     muiTablePaperProps: {
       sx: {
         borderRadius: 3,
+        border: '1px solid #e5e7eb',
         overflow: 'hidden',
         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
       },
@@ -463,18 +590,29 @@ const DriverPayments = () => {
         borderTop: '1px solid #e5e7eb',
       },
     },
+    muiTableHeadCellProps: {
+      sx: {
+        backgroundColor: '#fafafa',
+        fontWeight: 700,
+        color: '#6b7280',
+        textTransform: 'uppercase',
+        fontSize: '0.75rem',
+        letterSpacing: '0.03em',
+        borderBottom: '1px solid #e5e7eb',
+      },
+    },
+    muiTableBodyRowProps: {
+      sx: {
+        '&:hover td': { backgroundColor: '#f6f8ff' },
+      },
+    },
     positionToolbarAlertBanner: 'bottom',
     renderBottomToolbarCustomActions: ({ table }) => {
       const selectedRows = table.getSelectedRowModel().rows;
       const filteredRows = table.getFilteredRowModel().rows;
 
       const getPagoFinal = (row) => {
-        const explicitValue = row?.original?.pago?.pago_final;
-        const base = Number(row?.original?.pago?.pago_base ?? 0);
-        const ajustes = Number(row?.original?.pago?.ajustes_total ?? 0);
-        const adelanto = Number(row?.original?.adelanto_monto ?? row?.original?.pago?.adelanto_monto ?? 0);
-        const fallback = (Number.isNaN(base) ? 0 : base) + (Number.isNaN(ajustes) ? 0 : ajustes) - (Number.isNaN(adelanto) ? 0 : adelanto);
-        const value = Number(explicitValue ?? fallback);
+        const value = Number(getDriverPaymentFinal(row?.original));
         return Number.isNaN(value) ? 0 : value;
       };
 
@@ -493,16 +631,12 @@ const DriverPayments = () => {
       );
     },
     renderTopToolbarCustomActions: () => (
-      <Box className="driver-payments-period-filters">
-        <Typography className="driver-payments-period-title">Período</Typography>
-        <FormControl size="big">
-          <InputLabel id="driver-payments-year-label">Año</InputLabel>
+      <Box sx={{ display: 'flex', gap: 2, p: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Typography sx={{ fontWeight: 700, color: '#374151' }}>Periodo</Typography>
+        <FormControl sx={{ minWidth: 90 }} size="small">
           <Select
-            labelId="driver-payments-year-label"
             value={yearFilter}
-            label="Año"
             onChange={(event) => setYearFilter(event.target.value)}
-            className="driver-payments-period-select"
           >
             {availableYears.map((year) => (
               <MenuItem key={year} value={year}>
@@ -511,14 +645,10 @@ const DriverPayments = () => {
             ))}
           </Select>
         </FormControl>
-        <FormControl size="big">
-          <InputLabel id="driver-payments-month-label">Mes</InputLabel>
+        <FormControl sx={{ minWidth: 140 }} size="small">
           <Select
-            labelId="driver-payments-month-label"
             value={monthFilter}
-            label="Mes"
             onChange={(event) => setMonthFilter(event.target.value)}
-            className="driver-payments-period-select"
           >
             {Array.from({ length: 12 }, (_, index) => {
               const value = String(index + 1).padStart(2, '0');
@@ -536,13 +666,126 @@ const DriverPayments = () => {
 
   return (
     <div className="driver-payments-layout">
-      <Navbar />
       <div className="driver-payments-container">
-        <div className="driver-payments-header">
-          <h1>👨‍✈️ Pagos de Choferes</h1>
-          <p>Revisión y cálculo por viaje</p>
-        </div>
+        
         <MaterialReactTable table={table} />
+        <Popper
+          open={Boolean(filterPopover.anchorEl)}
+          anchorEl={filterPopover.anchorEl}
+          placement="bottom-start"
+          sx={{ zIndex: 1400 }}
+        >
+          <ClickAwayListener onClickAway={closeHeaderFilter}>
+            <Paper
+              elevation={0}
+              sx={{
+                mt: 1,
+                width: 270,
+                borderRadius: 3,
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 12px 32px rgba(15, 23, 42, 0.14)',
+                overflow: 'hidden',
+              }}
+            >
+              <Box sx={{ p: 2, display: 'grid', gap: 1.5 }}>
+                <Typography sx={{ fontWeight: 800, fontSize: '0.90rem', color: '#374151' }}>
+                  FILTRO
+                </Typography>
+
+                <TextField
+                  size="small"
+                  placeholder="Buscar opción..."
+                  value={filterPopover.search}
+                  onChange={(e) =>
+                    setFilterPopover((prev) => ({
+                      ...prev,
+                      search: e.target.value,
+                    }))
+                  }
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      height: 34,
+                      fontSize: '0.9rem',
+                    },
+                    '& .MuiInputBase-input': {
+                      py: 0.5,
+                    },
+                  }}
+                />
+
+                <Box
+                  sx={{
+                    maxHeight: 260,
+                    overflowY: 'auto',
+                    display: 'grid',
+                    gap: 0.75,
+                    pr: 0.5,
+                  }}
+                >
+                  {visibleHeaderFilterOptions.map((option) => {
+                    const checked = filterPopover.draftValues.includes(option.value);
+                    const toggleOption = () =>
+                      setFilterPopover((prev) => {
+                        const isChecked = prev.draftValues.includes(option.value);
+                        return {
+                          ...prev,
+                          draftValues: isChecked
+                            ? prev.draftValues.filter((value) => value !== option.value)
+                            : [...prev.draftValues, option.value],
+                        };
+                      });
+
+                    return (
+                      <Box
+                        key={option.value}
+                        onClick={toggleOption}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 1,
+                          cursor: 'pointer',
+                          borderRadius: 2,
+                          px: 0.75,
+                          py: 0.5,
+                          '&:hover': { backgroundColor: '#fff7ed' },
+                        }}
+                      >
+                        <Checkbox checked={checked} size="small" sx={{ p: 0.25, mt: '1px' }} />
+                        <Typography sx={{ fontSize: '0.92rem', color: '#374151', lineHeight: 1.35 }}>
+                          {option.label}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={handleClearHeaderFilter}
+                    sx={{ color: '#6b7280', fontWeight: 700 }}
+                  >
+                    Limpiar
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleApplyHeaderFilter}
+                    sx={{
+                      backgroundColor: '#FF9020',
+                      color: '#111827',
+                      fontWeight: 700,
+                      '&:hover': { backgroundColor: '#f79a3e' },
+                    }}
+                  >
+                    Aplicar
+                  </Button>
+                </Box>
+              </Box>
+            </Paper>
+          </ClickAwayListener>
+        </Popper>
       </div>
 
       {/* Modal Config */}
@@ -554,7 +797,7 @@ const DriverPayments = () => {
         PaperProps={{ className: 'driver-payments-modal-paper' }}
       >
         <DialogTitle className="driver-payments-modal-title">% / Precio fijo</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 3 }}>
           <FormControl size="small">
             <Select value={configTipo} onChange={(e) => setConfigTipo(e.target.value)}>
               <MenuItem value="PORCENTAJE">Porcentaje</MenuItem>

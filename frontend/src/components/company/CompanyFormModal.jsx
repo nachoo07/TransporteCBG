@@ -69,14 +69,14 @@ const CompanyFormModal = ({ isOpen, onClose, onSubmit, companyToEdit }) => {
     <div className="company-modal-overlay" onClick={onClose}>
       <div className="company-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="company-modal-header">
-          <h2>{companyToEdit ? `Editar ${companyToEdit.nombre ?? ''}` : 'Nueva Empresa'}</h2>
+          <h2>{companyToEdit ? 'Editar Empresa' : 'Nueva Empresa'}</h2>
           <button onClick={onClose} className="company-modal-close">&times;</button>
         </div>
 
         <form onSubmit={handleSubmit} className="company-form">
           {/* Nombre */}
           <div className="company-form-group">
-            <label htmlFor="name">Nombre de la Empresa *</label>
+            <label htmlFor="name">Nombre de la Empresa</label>
             <input
               type="text"
               id="name"
@@ -85,13 +85,14 @@ const CompanyFormModal = ({ isOpen, onClose, onSubmit, companyToEdit }) => {
               onChange={handleChange}
               placeholder="Ej: Transportes ABC"
               className={errors.nombre ? 'company-input error' : 'company-input'}
+              style={{ textTransform: 'capitalize' }}
             />
             {errors.nombre && <span className="company-error-msg">{errors.nombre}</span>}
           </div>
 
           {/* Tipo de Cobro */}
           <div className="company-form-group">
-            <label htmlFor="tipo_cobro">Tipo de Cobro *</label>
+            <label htmlFor="tipo_cobro">Tipo de Cobro</label>
             <select
               id="tipo_cobro"
               name="tipo_cobro"

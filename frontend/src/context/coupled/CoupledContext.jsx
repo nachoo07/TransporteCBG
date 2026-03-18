@@ -57,6 +57,8 @@ const CoupledProvider = ({ children }) => {
             // Obtenemos el objeto creado
             const created = res.data.data || res.data;
             setCoupled((prev) => [...prev, created]);
+            await getCoupled();
+            await getInactiveCoupled();
 
             showSuccessToast('¡Acoplado creado correctamente!');
             return true;
@@ -79,6 +81,8 @@ const CoupledProvider = ({ children }) => {
                     return coupled;
                 })
             );
+            await getCoupled();
+            await getInactiveCoupled();
             showSuccessToast('Acoplado actualizado correctamente.');
             return true;
         } catch (error) {

@@ -66,82 +66,108 @@ const UserFormModal = ({ isOpen, onClose, onSubmit, userToEdit }) => {
     };
 
     return (
-        <div className="modal-overlay">
-            <div className="modal-content">
-                <div className="modal-header">
-                    <h2>{userToEdit ? 'Editar Administrador' : 'Nuevo Administrador'}</h2>
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="user-modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header user-modal-header">
+                    <div className="user-modal-header-copy">
+                        <h2>{userToEdit ? 'Editar Usuario' : 'Nuevo Usuario'}</h2>
+                    </div>
                     <button onClick={onClose} className="btn-close-x">&times;</button>
                 </div>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Nombre:</label>
-                        <input
-                            type="text"
-                            name="nombre"
-                            className="form-input"
-                            value={formData.nombre}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
+                <form onSubmit={handleSubmit} className="user-form-layout">
+                    <div className="user-form-body">
+                        <div className="user-form-section">
+                            <div className="user-form-section-title">Datos personales</div>
+                            <div className="user-form-row">
+                                <div className="form-group-user">
+                                    <label>Nombre</label>
+                                    <input
+                                        type="text"
+                                        name="nombre"
+                                        className="form-input"
+                                        value={formData.nombre}
+                                        onChange={handleChange}
+                                        placeholder="Nombre"
+                                        required
+                                    />
+                                </div>
 
-                    <div className="form-group">
-                        <label>Apellido:</label>
-                        <input
-                            type="text"
-                            name="apellido"
-                            className="form-input"
-                            value={formData.apellido}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Usuario:</label>
-                        <input
-                            type="text"
-                            name="email"
-                            className="form-input"
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="ej: nachoadmin"
-                            required
-                        />
-                        <small className="input-help">
-                            Solo letras, números y guión bajo.
-                        </small>
-                    </div>
-                    <div>
-                        <label>Estado:</label>
-                        <select
-                            name="activo"
-                            className="form-input"
-                            value={formData.activo ? "true" : "false"}
-                            onChange={(e) => setFormData(prev => ({ ...prev, activo: e.target.value === 'true' }))}
-                        >
-                            <option value="true">Activo</option>
-                            <option value="false">Inactivo</option>
-                        </select>
-                    </div>
-
-                    {!userToEdit && (
-                        <div className="form-group">
-                            <label>Contraseña:</label>
-                            <input
-                                type="password"
-                                name="password"
-                                className="form-input"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                            />
-                            <small id="passwordHelp" className="input-help">
-                                La contraseña debe tener al menos 8 caracteres, incluir una letra mayúscula, una minúscula y un número.
-                            </small>
+                                <div className="form-group-user">
+                                    <label>Apellido</label>
+                                    <input
+                                        type="text"
+                                        name="apellido"
+                                        className="form-input"
+                                        value={formData.apellido}
+                                        onChange={handleChange}
+                                        placeholder="Apellido"
+                                        required
+                                    />
+                                </div>
+                            </div>
                         </div>
-                    )}
+
+                        <div className="user-form-section">
+                            <div className="user-form-section-title">Acceso</div>
+                            <div className={`user-form-row ${userToEdit ? 'user-form-row-edit' : 'user-form-row-create'}`}>
+                                <div className="form-group-user">
+                                    <label>Usuario</label>
+                                    <input
+                                        type="text"
+                                        name="email"
+                                        className="form-input"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        placeholder="Usuario"
+                                        required
+                                        autoCapitalize="none"
+                                        autoCorrect="off"
+                                        spellCheck={false}
+                                        style={{ textTransform: 'none' }}
+                                    />
+                                    <small className="input-help">
+                                        Solo letras, numeros y guion bajo.
+                                    </small>
+                                </div>
+
+                                {!userToEdit ? (
+                                    <div className="form-group-user">
+                                        <label>Contraseña</label>
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            className="form-input"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            placeholder="Contraseña"
+                                            required
+                                            autoCapitalize="none"
+                                            autoCorrect="off"
+                                            spellCheck={false}
+                                            style={{ textTransform: 'none' }}
+                                        />
+                                        <small id="passwordHelp" className="input-help">
+                                            Debe incluir mayuscula, minuscula y numero.
+                                        </small>
+                                    </div>
+                                ) : (
+                                    <div className="form-group-user">
+                                        <label>Estado</label>
+                                        <select
+                                            name="activo"
+                                            className="form-input"
+                                            value={formData.activo ? 'true' : 'false'}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, activo: e.target.value === 'true' }))}
+                                        >
+                                            <option value="true">Activo</option>
+                                            <option value="false">Inactivo</option>
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
 
                     <div className="modal-actions">
                         <button type="button" onClick={onClose} className="btn-cancel">

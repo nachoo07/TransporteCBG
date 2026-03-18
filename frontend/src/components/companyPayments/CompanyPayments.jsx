@@ -1,28 +1,31 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-
-import Navbar from '../navbar/Navbar';
+import React, { useEffect, useMemo } from 'react';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from 'material-react-table';
+import { Box, FormControl, MenuItem, Select, Typography } from '@mui/material';
+import { MRT_Localization_ES } from 'material-react-table/locales/es';
 import { useTravel } from '../../context/travel/TravelContext';
 import './companyPayments.css';
 
 const CompanyPayments = () => {
   const { travels, loading, getTravels } = useTravel();
   const today = new Date();
-  const [monthFilter, setMonthFilter] = useState(String(today.getMonth() + 1).padStart(2, '0'));
-  const [yearFilter, setYearFilter] = useState(String(today.getFullYear()));
-  const [filters, setFilters] = useState({
-    empresa: [],
-    numero_factura: [],
-    fecha_facturada: [],
-    estado_pago: [],
-  });
-  const [openFilterKey, setOpenFilterKey] = useState(null);
-  const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
-  const [expandedRows, setExpandedRows] = useState({});
-  const popoverRef = useRef(null);
+  const [monthFilter, setMonthFilter] = React.useState(String(today.getMonth() + 1).padStart(2, '0'));
+  const [yearFilter, setYearFilter] = React.useState(String(today.getFullYear()));
 
   useEffect(() => {
     getTravels();
   }, [getTravels]);
+
+  const brand = useMemo(
+    () => ({
+      main: '#FF9020',
+      hover: '#f79a3e',
+      border: '#f59e0b',
+    }),
+    [],
+  );
 
   const toYmd = (date) => {
     if (!date) return '';
@@ -56,10 +59,30 @@ const CompanyPayments = () => {
     }).format(asNumber);
   };
 
+  const badgeLabel = (value) => {
+    if (value === 'PAGADO') return 'Pagado';
+    if (value === 'DEBEN') return 'Debe';
+    if (value === 'LIQUIDADO') return 'Liquidado';
+    if (value === 'FACTURADO') return 'Facturado';
+    return 'Falta';
+  };
+
+  const getStatusColor = (status) => {
+    const map = {
+      LIQUIDADO: '#d4edda',
+      PAGADO: '#d4edda',
+      FACTURADO: '#cce5ff',
+      FALTA: '#f8d7da',
+      DEBEN: '#f8d7da',
+      PENDIENTE: '#fff3cd',
+    };
+    return map[status] || '#e5e7eb';
+  };
+
   const availableYears = useMemo(() => {
     const years = new Set([String(today.getFullYear())]);
-    (Array.isArray(travels) ? travels : []).forEach((t) => {
-      const ymd = toYmd(t?.fecha_viaje);
+    (Array.isArray(travels) ? travels : []).forEach((travel) => {
+      const ymd = toYmd(travel?.fecha_viaje);
       if (ymd) years.add(ymd.slice(0, 4));
     });
     return Array.from(years).sort((a, b) => Number(b) - Number(a));
@@ -113,7 +136,6 @@ const CompanyPayments = () => {
         if ((travel.estado_liquidacion || 'FALTA') !== 'LIQUIDADO') group._allLiquidado = false;
         if ((travel.estado_facturacion || 'FALTA') !== 'FACTURADO') group._allFacturado = false;
         if ((travel.estado_pago || 'DEBEN') !== 'PAGADO') group._allPagado = false;
-
         group.trips.push({
           id: travel.id,
           fecha_viaje: formatDate(travel.fecha_viaje),
@@ -135,334 +157,266 @@ const CompanyPayments = () => {
         estado_pago: group._allPagado ? 'PAGADO' : 'DEBEN',
       }))
       .sort((a, b) => {
-        const af = a.fecha_facturada_fmt === '-' ? '' : a.fecha_facturada_fmt;
-        const bf = b.fecha_facturada_fmt === '-' ? '' : b.fecha_facturada_fmt;
-        if (af === bf) return a.empresa.localeCompare(b.empresa, 'es');
-        return bf.localeCompare(af, 'es');
+        if (a.fecha_facturada_fmt === b.fecha_facturada_fmt) {
+          return a.empresa.localeCompare(b.empresa, 'es');
+        }
+        if (a.fecha_facturada_fmt === '-') return 1;
+        if (b.fecha_facturada_fmt === '-') return -1;
+        const [ad, am, ay] = a.fecha_facturada_fmt.split('/');
+        const [bd, bm, by] = b.fecha_facturada_fmt.split('/');
+        return new Date(`${by}-${bm}-${bd}`) - new Date(`${ay}-${am}-${ad}`);
       });
   }, [travels, monthFilter, yearFilter]);
 
-  const applyFilters = (rows, currentFilters) =>
-    rows.filter((row) => {
-      if (currentFilters.empresa.length && !currentFilters.empresa.includes(row.empresa)) return false;
-      if (currentFilters.numero_factura.length && !currentFilters.numero_factura.includes(row.numero_factura)) return false;
-      if (currentFilters.fecha_facturada.length && !currentFilters.fecha_facturada.includes(row.fecha_facturada_fmt)) return false;
-      if (currentFilters.estado_pago.length && !currentFilters.estado_pago.includes(row.estado_pago)) return false;
-      return true;
-    });
-
-  const filteredRows = useMemo(() => applyFilters(groupedRows, filters), [groupedRows, filters]);
-
-  const optionsFor = useMemo(() => {
-    const unique = (values) => Array.from(new Set(values)).filter(Boolean).sort((a, b) => a.localeCompare(b, 'es'));
-    const rows = groupedRows;
-    return {
-      empresa: unique(rows.map((row) => row.empresa)),
-      numero_factura: unique(rows.map((row) => row.numero_factura)),
-      fecha_facturada: unique(rows.map((row) => row.fecha_facturada_fmt)),
-      estado_pago: unique(rows.map((row) => row.estado_pago)),
-    };
-  }, [groupedRows]);
-
-  useEffect(() => {
-    if (!openFilterKey) return;
-    const onPointerDown = (event) => {
-      if (event.target?.closest?.('.cp-filter-btn')) return;
-      if (!popoverRef.current) return;
-      if (popoverRef.current.contains(event.target)) return;
-      setOpenFilterKey(null);
-    };
-    window.addEventListener('pointerdown', onPointerDown);
-    return () => window.removeEventListener('pointerdown', onPointerDown);
-  }, [openFilterKey]);
-
-  const togglePopover = (key, anchorEl) => {
-    setOpenFilterKey((prev) => (prev === key ? null : key));
-    if (anchorEl) {
-      const rect = anchorEl.getBoundingClientRect();
-      setPopoverPosition({
-        top: rect.bottom + 8,
-        left: Math.max(12, rect.left - 210),
-      });
-    }
-  };
-
-  const toggleFilterValue = (key, value) => {
-    setFilters((prev) => {
-      const selected = new Set(prev[key]);
-      if (selected.has(value)) selected.delete(value);
-      else selected.add(value);
-      return { ...prev, [key]: Array.from(selected) };
-    });
-  };
-
-  const clearColumnFilter = (key) => setFilters((prev) => ({ ...prev, [key]: [] }));
-
-  const clearAllFilters = () =>
-    setFilters({
-      empresa: [],
-      numero_factura: [],
-      fecha_facturada: [],
-      estado_pago: [],
-    });
-
-  const toggleExpand = (id) =>
-    setExpandedRows((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-
-  const badgeLabel = (value) => {
-    if (value === 'PAGADO') return 'Pagado';
-    if (value === 'DEBEN') return 'Debe';
-    if (value === 'LIQUIDADO') return 'Liquidado';
-    if (value === 'FACTURADO') return 'Facturado';
-    return 'Falta';
-  };
-
-  const badgeClass = (value) => {
-    if (value === 'PAGADO' || value === 'LIQUIDADO' || value === 'FACTURADO') return 'company-payments-badge--paid';
-    return 'company-payments-badge--owed';
-  };
-
-  const FilterIconButton = ({ columnKey, label }) => (
-    <button
-      type="button"
-      className={`cp-filter-btn${filters[columnKey].length ? ' is-active' : ''}`}
-      title={`Filtrar por ${label}`}
-      onClick={(event) => togglePopover(columnKey, event.currentTarget)}
-    >
-      <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-        <path fill="currentColor" d="M3 5h18l-7 8v6l-4-2v-4z" />
-      </svg>
-    </button>
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: 'empresa',
+        header: 'Empresa',
+        size: 220,
+      },
+      {
+        accessorKey: 'numero_factura',
+        header: 'N° Factura',
+        size: 140,
+      },
+      {
+        accessorKey: 'fecha_facturada_fmt',
+        header: 'Fecha Facturada',
+        size: 140,
+      },
+      {
+        accessorKey: 'cantidad_viajes',
+        header: 'Viajes',
+        size: 100,
+      },
+      {
+        accessorKey: 'monto_total',
+        header: 'Monto Total',
+        size: 140,
+        Cell: ({ cell }) => formatCurrency(cell.getValue()),
+      },
+      {
+        accessorKey: 'estado_liquidacion',
+        header: 'Liquidación',
+        size: 120,
+        Cell: ({ cell }) => (
+          <Box
+            component="span"
+            sx={{
+              backgroundColor: getStatusColor(cell.getValue()),
+              borderRadius: '0.25rem',
+              color: '#000',
+              p: '0.25rem 0.5rem',
+              fontWeight: 'bold',
+              fontSize: '0.8rem',
+            }}
+          >
+            {badgeLabel(cell.getValue())}
+          </Box>
+        ),
+      },
+      {
+        accessorKey: 'estado_facturacion',
+        header: 'Facturación',
+        size: 120,
+        Cell: ({ cell }) => (
+          <Box
+            component="span"
+            sx={{
+              backgroundColor: getStatusColor(cell.getValue()),
+              borderRadius: '0.25rem',
+              color: '#000',
+              p: '0.25rem 0.5rem',
+              fontWeight: 'bold',
+              fontSize: '0.8rem',
+            }}
+          >
+            {badgeLabel(cell.getValue())}
+          </Box>
+        ),
+      },
+      {
+        accessorKey: 'estado_pago',
+        header: 'Pago',
+        size: 110,
+        Cell: ({ cell }) => (
+          <Box
+            component="span"
+            sx={{
+              backgroundColor: getStatusColor(cell.getValue()),
+              borderRadius: '0.25rem',
+              color: '#000',
+              p: '0.25rem 0.5rem',
+              fontWeight: 'bold',
+              fontSize: '0.8rem',
+            }}
+          >
+            {badgeLabel(cell.getValue())}
+          </Box>
+        ),
+      },
+    ],
+    [],
   );
+
+  const table = useMaterialReactTable({
+    columns,
+    data: groupedRows,
+    state: { isLoading: loading },
+    localization: MRT_Localization_ES,
+    enableColumnFilters: false,
+    enableSorting: false,
+    enableColumnOrdering: false,
+    enableDensityToggle: false,
+    enableFullScreenToggle: false,
+    enableExpanding: true,
+    enableRowActions: false,
+    enableRowSelection: false,
+    autoResetPageIndex: false,
+    paginationDisplayMode: 'pages',
+    positionToolbarAlertBanner: 'bottom',
+    muiTablePaperProps: {
+      sx: {
+        borderRadius: 3,
+        border: '1px solid #e5e7eb',
+        overflow: 'hidden',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+      },
+    },
+    muiTopToolbarProps: {
+      sx: {
+        backgroundColor: '#fff',
+        borderBottom: '1px solid #e5e7eb',
+      },
+    },
+    muiBottomToolbarProps: {
+      sx: {
+        backgroundColor: '#fff',
+        borderTop: '1px solid #e5e7eb',
+      },
+    },
+    muiTableHeadCellProps: {
+      sx: {
+        backgroundColor: '#fafafa',
+        fontWeight: 700,
+        color: '#6b7280',
+        textTransform: 'uppercase',
+        fontSize: '0.75rem',
+        letterSpacing: '0.03em',
+        borderBottom: '1px solid #e5e7eb',
+      },
+    },
+    muiTableBodyRowProps: {
+      sx: {
+        '&:hover td': { backgroundColor: '#f6f8ff' },
+      },
+    },
+    renderDetailPanel: ({ row }) => (
+      <Box sx={{ p: 2, backgroundColor: '#fff7ed' }}>
+        <Box
+          sx={{
+            border: '1px solid #fed7aa',
+            borderRadius: 2,
+            backgroundColor: '#fff',
+            overflow: 'hidden',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: '80px 120px 1fr 1fr 1fr 140px 120px 120px 120px',
+              gap: 0,
+              backgroundColor: '#fffbeb',
+              borderBottom: '1px solid #f1f5f9',
+            }}
+          >
+            {['ID', 'Fecha', 'Origen', 'Destino', 'Chofer', 'Monto', 'Liqu.', 'Fact.', 'Pago'].map((label) => (
+              <Box
+                key={label}
+                sx={{
+                  px: 1.5,
+                  py: 1,
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  color: '#6b7280',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {label}
+              </Box>
+            ))}
+          </Box>
+
+          {row.original.trips.map((trip, index) => (
+            <Box
+              key={trip.id}
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '80px 120px 1fr 1fr 1fr 140px 120px 120px 120px',
+                borderBottom: index === row.original.trips.length - 1 ? 'none' : '1px solid #f1f5f9',
+              }}
+            >
+              <Box sx={{ px: 1.5, py: 1.1, fontSize: '0.86rem' }}>{trip.id}</Box>
+              <Box sx={{ px: 1.5, py: 1.1, fontSize: '0.86rem' }}>{trip.fecha_viaje}</Box>
+              <Box sx={{ px: 1.5, py: 1.1, fontSize: '0.86rem' }}>{trip.origen}</Box>
+              <Box sx={{ px: 1.5, py: 1.1, fontSize: '0.86rem' }}>{trip.destino}</Box>
+              <Box sx={{ px: 1.5, py: 1.1, fontSize: '0.86rem' }}>{trip.chofer}</Box>
+              <Box sx={{ px: 1.5, py: 1.1, fontSize: '0.86rem' }}>{formatCurrency(trip.monto_total)}</Box>
+              <Box sx={{ px: 1.5, py: 1.1, fontSize: '0.86rem' }}>{badgeLabel(trip.estado_liquidacion)}</Box>
+              <Box sx={{ px: 1.5, py: 1.1, fontSize: '0.86rem' }}>{badgeLabel(trip.estado_facturacion)}</Box>
+              <Box sx={{ px: 1.5, py: 1.1, fontSize: '0.86rem' }}>{badgeLabel(trip.estado_pago)}</Box>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    ),
+    renderTopToolbarCustomActions: () => (
+      <Box sx={{ display: 'flex', gap: 2, p: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Typography sx={{ fontWeight: 700, color: '#374151' }}>
+          Periodo
+        </Typography>
+        <FormControl sx={{ minWidth: 90 }} size="small">
+          <Select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
+            {availableYears.map((year) => (
+              <MenuItem key={year} value={year}>{year}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl sx={{ minWidth: 140 }} size="small">
+          <Select value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)}>
+            {Array.from({ length: 12 }, (_, index) => {
+              const value = String(index + 1).padStart(2, '0');
+              return (
+                <MenuItem key={value} value={value}>
+                  {new Date(2000, index, 1).toLocaleString('es-AR', { month: 'long' })}
+                </MenuItem>
+              );
+            })}
+          </Select>
+        </FormControl>
+      </Box>
+    ),
+    renderBottomToolbarCustomActions: () => {
+      const totalMonto = groupedRows.reduce((sum, row) => sum + Number(row.monto_total || 0), 0);
+      return (
+        <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', px: 2, py: 1, flexWrap: 'wrap' }}>
+          <Typography sx={{ fontWeight: 700, color: '#374151' }}>
+            Facturas agrupadas: {groupedRows.length}
+          </Typography>
+          <Typography sx={{ fontWeight: 700, color: brand.main }}>
+            Total período: {formatCurrency(totalMonto)}
+          </Typography>
+        </Box>
+      );
+    },
+  });
 
   return (
     <div className="company-payments-layout">
-      <Navbar />
       <div className="company-payments-container">
-        <div className="company-payments-header">
-          <h1>
-            <span className="company-payments-title-icon" aria-hidden="true">🏦</span> Pagos de Empresa
-          </h1>
-          <p>Vista agrupada por factura (solo lectura)</p>
-        </div>
-
-        <div className="company-payments-toolbar">
-          <div className="company-payments-toolbar-left">
-            <span className="company-payments-toolbar-title">Período</span>
-            <select className="cp-period-select" value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
-              {availableYears.map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-            <select className="cp-period-select" value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)}>
-              {Array.from({ length: 12 }, (_, index) => {
-                const value = String(index + 1).padStart(2, '0');
-                return (
-                  <option key={value} value={value}>
-                    {new Date(2000, index, 1).toLocaleString('es-AR', { month: 'long' })}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-          <div className="company-payments-toolbar-right">
-            <button
-              type="button"
-              className="cp-clear-all-btn"
-              onClick={clearAllFilters}
-              disabled={!Object.values(filters).some((list) => list.length > 0)}
-            >
-              Limpiar filtros
-            </button>
-          </div>
-        </div>
-
-        <div className="company-payments-table-wrapper">
-          <table className="company-payments-table">
-            <thead>
-              <tr>
-                <th style={{ width: 44 }} />
-                <th>
-                  <div className="cp-th">
-                    <span>Empresa</span>
-                    <FilterIconButton columnKey="empresa" label="empresa" />
-                    {openFilterKey === 'empresa' && (
-                      <div className="cp-filter-popover" ref={popoverRef} style={{ top: popoverPosition.top, left: popoverPosition.left }}>
-                        <div className="cp-filter-title">Filtrar</div>
-                        <div className="cp-filter-list">
-                          {optionsFor.empresa.map((opt) => (
-                            <label key={opt} className="cp-filter-item">
-                              <input type="checkbox" checked={filters.empresa.includes(opt)} onChange={() => toggleFilterValue('empresa', opt)} />
-                              <span>{opt}</span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="cp-filter-actions">
-                          <button type="button" className="cp-filter-clear" onClick={() => clearColumnFilter('empresa')}>Limpiar</button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </th>
-                <th>
-                  <div className="cp-th">
-                    <span>N° Factura</span>
-                    <FilterIconButton columnKey="numero_factura" label="N° factura" />
-                    {openFilterKey === 'numero_factura' && (
-                      <div className="cp-filter-popover" ref={popoverRef} style={{ top: popoverPosition.top, left: popoverPosition.left }}>
-                        <div className="cp-filter-title">Filtrar</div>
-                        <div className="cp-filter-list">
-                          {optionsFor.numero_factura.map((opt) => (
-                            <label key={opt} className="cp-filter-item">
-                              <input type="checkbox" checked={filters.numero_factura.includes(opt)} onChange={() => toggleFilterValue('numero_factura', opt)} />
-                              <span>{opt}</span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="cp-filter-actions">
-                          <button type="button" className="cp-filter-clear" onClick={() => clearColumnFilter('numero_factura')}>Limpiar</button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </th>
-                <th>
-                  <div className="cp-th">
-                    <span>Fecha Facturada</span>
-                    <FilterIconButton columnKey="fecha_facturada" label="fecha facturada" />
-                    {openFilterKey === 'fecha_facturada' && (
-                      <div className="cp-filter-popover" ref={popoverRef} style={{ top: popoverPosition.top, left: popoverPosition.left }}>
-                        <div className="cp-filter-title">Filtrar</div>
-                        <div className="cp-filter-list">
-                          {optionsFor.fecha_facturada.map((opt) => (
-                            <label key={opt} className="cp-filter-item">
-                              <input type="checkbox" checked={filters.fecha_facturada.includes(opt)} onChange={() => toggleFilterValue('fecha_facturada', opt)} />
-                              <span>{opt}</span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="cp-filter-actions">
-                          <button type="button" className="cp-filter-clear" onClick={() => clearColumnFilter('fecha_facturada')}>Limpiar</button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </th>
-                <th style={{ textAlign: 'center' }}>Viajes</th>
-                <th style={{ textAlign: 'right' }}>Monto Total</th>
-                <th style={{ textAlign: 'center' }}>Liquidación</th>
-                <th style={{ textAlign: 'center' }}>Facturación</th>
-                <th style={{ textAlign: 'center' }}>
-                  <div className="cp-th cp-th--center">
-                    <span>Pago</span>
-                    <FilterIconButton columnKey="estado_pago" label="pago" />
-                    {openFilterKey === 'estado_pago' && (
-                      <div className="cp-filter-popover" ref={popoverRef} style={{ top: popoverPosition.top, left: popoverPosition.left }}>
-                        <div className="cp-filter-title">Filtrar</div>
-                        <div className="cp-filter-list">
-                          {optionsFor.estado_pago.map((opt) => (
-                            <label key={opt} className="cp-filter-item">
-                              <input type="checkbox" checked={filters.estado_pago.includes(opt)} onChange={() => toggleFilterValue('estado_pago', opt)} />
-                              <span>{badgeLabel(opt)}</span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="cp-filter-actions">
-                          <button type="button" className="cp-filter-clear" onClick={() => clearColumnFilter('estado_pago')}>Limpiar</button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={9} style={{ padding: 24, color: '#6b7280' }}>Cargando...</td>
-                </tr>
-              ) : filteredRows.length === 0 ? (
-                <tr>
-                  <td colSpan={9} style={{ padding: 24, color: '#6b7280' }}>No hay viajes para {monthFilter}/{yearFilter}.</td>
-                </tr>
-              ) : (
-                filteredRows.map((row) => (
-                  <React.Fragment key={row.id}>
-                    <tr>
-                      <td style={{ textAlign: 'center' }}>
-                        <button type="button" className="cp-expand-btn" onClick={() => toggleExpand(row.id)}>
-                          {expandedRows[row.id] ? '▾' : '▸'}
-                        </button>
-                      </td>
-                      <td><strong>{row.empresa}</strong></td>
-                      <td>{row.numero_factura}</td>
-                      <td>{row.fecha_facturada_fmt}</td>
-                      <td style={{ textAlign: 'center' }}>{row.cantidad_viajes}</td>
-                      <td style={{ textAlign: 'right' }}>{formatCurrency(row.monto_total)}</td>
-                      <td style={{ textAlign: 'center' }}>
-                        <span className={`company-payments-badge ${badgeClass(row.estado_liquidacion)}`}>
-                          {badgeLabel(row.estado_liquidacion)}
-                        </span>
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <span className={`company-payments-badge ${badgeClass(row.estado_facturacion)}`}>
-                          {badgeLabel(row.estado_facturacion)}
-                        </span>
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <span className={`company-payments-badge ${badgeClass(row.estado_pago)}`}>
-                          {badgeLabel(row.estado_pago)}
-                        </span>
-                      </td>
-                    </tr>
-                    {expandedRows[row.id] && (
-                      <tr className="cp-detail-row">
-                        <td colSpan={9}>
-                          <div className="cp-detail-card">
-                            <table className="cp-detail-table">
-                              <thead>
-                                <tr>
-                                  <th>ID</th>
-                                  <th>Fecha</th>
-                                  <th>Origen</th>
-                                  <th>Destino</th>
-                                  <th>Chofer</th>
-                                  <th style={{ textAlign: 'right' }}>Monto</th>
-                                  <th>Liqu.</th>
-                                  <th>Fact.</th>
-                                  <th>Pago</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {row.trips.map((trip) => (
-                                  <tr key={trip.id}>
-                                    <td>{trip.id}</td>
-                                    <td>{trip.fecha_viaje}</td>
-                                    <td>{trip.origen}</td>
-                                    <td>{trip.destino}</td>
-                                    <td>{trip.chofer}</td>
-                                    <td style={{ textAlign: 'right' }}>{formatCurrency(trip.monto_total)}</td>
-                                    <td>{trip.estado_liquidacion}</td>
-                                    <td>{trip.estado_facturacion}</td>
-                                    <td>{trip.estado_pago}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        
+        <MaterialReactTable table={table} />
       </div>
     </div>
   );

@@ -48,8 +48,6 @@ const procesarVencimientos = async () => {
                 cedula: item.vencimiento_cedula_chasis,
                 vtv: item.vencimiento_vtv_chasis,
                 senasa: item.vencimiento_senasa_chasis,
-                tipif: item.vencimiento_tipificacion_carga_chasis,
-                homol: item.vencimiento_homologacion_chasis
             });
 
             if (item.estado_general !== nuevoEstado) {
@@ -76,12 +74,9 @@ const procesarVencimientos = async () => {
             // Pasamos las fechas específicas de Acoplados
             // (Asegúrate que los nombres de columnas coincidan con tu DB)
             const nuevoEstado = calcularEstadoGeneral({
-                // Ejemplo de nombres comunes, ajusta si tu tabla tiene otros
-                cedula: item.vencimiento_cedula_acoplado, 
+                cedula: item.vencimiento_cedula_acoplado,
                 vtv: item.vencimiento_vtv_acoplado,
                 senasa: item.vencimiento_senasa_acoplado,
-                tipif: item.vencimiento_tipificacion_carga_acoplado,
-                homol: item.vencimiento_homologacion_acoplado
             });
 
             if (item.estado_general !== nuevoEstado) {

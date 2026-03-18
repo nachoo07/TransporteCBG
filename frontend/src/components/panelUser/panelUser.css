@@ -41,10 +41,15 @@
     padding: 4px;
     transition: transform 0.2s;
     color: #9ca3af;
+    font-size: 18px;
 }
 
 .btn-action:hover {
     transform: scale(1.1);
+    background: #fff;
+    box-shadow: 0 0 0 2px #FF9020, 0 2px 8px rgba(0,0,0,0.08);
+    border-radius: 6px;
+    outline: none;
 }
 
 .btn-action.edit:hover {
@@ -71,4 +76,127 @@
     padding: 3rem;
     color: #2563eb;
     font-weight: 500;
+}
+
+.driver-table th {
+    background: linear-gradient(180deg, #fff7ed 0%, #fffbf5 100%);
+    color: #9a3412;
+}
+
+.users-header {
+    margin-bottom: 1.25rem;
+}
+
+.users-control-panel {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 1rem 1rem 1.1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.users-control-header {
+    margin-bottom: 0.85rem;
+}
+
+.users-control-title {
+    display: inline-block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.users-toolbar-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: space-between;
+}
+
+.users-tabs-segmented {
+    background: #eef2f7;
+    border-radius: 16px;
+    padding: 0;
+    gap: 0.25rem;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.users-tab-btn {
+    border-radius: 0;
+    border-bottom: none;
+    padding: 0.82rem 1.15rem;
+    color: #6b7280;
+    font-size: 0.92rem;
+    min-height: 48px;
+}
+
+.users-tab-btn.active {
+    color: #111827;
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+.users-search-wrap {
+    display: flex;
+    align-items: center;
+    flex: 1.35;
+    min-width: 0;
+}
+
+.users-search-input {
+    width: 100%;
+    min-width: 320px;
+}
+
+.users-header-actions {
+    width: auto;
+    flex-shrink: 0;
+}
+
+.users-add-btn {
+    white-space: nowrap;
+}
+
+.users-tabs-row {
+    justify-content: flex-start;
+    margin-bottom: 1rem;
+}
+
+.users-tabs-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .users-control-panel {
+        padding: 0.9rem;
+    }
+
+    .users-toolbar-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .users-search-input,
+    .users-header-actions,
+    .users-header-actions .btn-add-driver,
+    .users-tabs-segmented {
+        width: 100%;
+    }
+
+    .users-tabs-group {
+        width: 100%;
+    }
+
+    .users-tabs-group .tab-btn {
+        flex: 1;
+        min-width: 0;
+    }
 }

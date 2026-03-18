@@ -1,21 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../../components/navbar/Navbar';
+import '../chasis/fleetManagement.css';
+import './billing.css';
+import CompanyPayments from '../../components/companyPayments/CompanyPayments';
+import DriverPayments from '../../components/driverPayments/DriverPayments';
 
 const PageBilling = () => {
+  const [activeTab, setActiveTab] = useState('payments');
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f5f5' }}>
+    <div className="fleet-layout">
       <Navbar />
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: 24 }}>
-        <h1>Facturación</h1>
-        <p>Accesos rápidos:</p>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <Link to="/company-payments" style={{ padding: '10px 14px', background: '#fff', borderRadius: 10, border: '1px solid #eee' }}>
-            Pagos de Empresa
-          </Link>
-          <Link to="/driver-payments" style={{ padding: '10px 14px', background: '#fff', borderRadius: 10, border: '1px solid #eee' }}>
-            Pagos de Choferes
-          </Link>
+      <div className="fleet-container">
+        <div className="fleet-header-main">
+          <h1>🧾 Facturacion</h1>
+        </div>
+
+        <div className="fleet-tabs fleet-tabs-segmented-main">
+          <button
+            className={`tab-btn fleet-main-tab-btn ${activeTab === 'payments' ? 'active' : ''}`}
+            onClick={() => setActiveTab('payments')}
+            type="button"
+          >
+           🏦 Empresas
+          </button>
+          <button
+            className={`tab-btn fleet-main-tab-btn ${activeTab === 'entities' ? 'active' : ''}`}
+            onClick={() => setActiveTab('entities')}
+            type="button"
+          >
+           👨‍✈️ Choferes
+          </button>
+        </div>
+
+        <div className="fleet-content-wrapper">
+          {activeTab === 'payments' ? (
+            <CompanyPayments />
+          ) : (
+            <DriverPayments />
+          )}
         </div>
       </div>
     </div>
@@ -23,4 +47,3 @@ const PageBilling = () => {
 };
 
 export default PageBilling;
-

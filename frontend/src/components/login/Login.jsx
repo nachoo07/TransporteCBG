@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'; // 1. Agregamos useEffect
 import { useAuth } from '../../context/login/LoginContext';
 import { useNavigate } from 'react-router-dom'; // 2. Importamos useNavigate
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 import './login.css';
 
 const Login = () => {
@@ -10,6 +11,8 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     // OPCIONAL PERO RECOMENDADO:
     // Si el usuario ya está logueado y entra a /login, lo mandamos al home automáticamente
@@ -30,11 +33,16 @@ const Login = () => {
         }
 
         try {
+            setSubmitting(true);
             await login({ email: email.trim(), password });
         } catch (err) {
-            // Mostrar mensaje simplificado del servidor
-            const msg = err.response?.data?.message || 'Error al iniciar sesión';
+            const msg =
+                err.response?.data?.message ||
+                err.message ||
+                'Error al iniciar sesión';
             setError(msg);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -50,13 +58,13 @@ const Login = () => {
                     <div className="login-logo-container">
                         <div className="login-logo">CBG</div>
                     </div>
-                    <h2 className="login-brand-title">TransporteCBG</h2>
+                    <h2 className="login-brand-title">Transporte CBG</h2>
                 </div>
 
                 <div className="login-form-section">
-                    <div>
-                        <h2 style={{ margin: '0 0 8px 0', fontSize: '24px', color: '#2a2a2a', fontWeight: '700' }}>Ingreso</h2>
-                        <p style={{ margin: '0 0 24px 0', fontSize: '13px', color: '#6B6B6B', fontWeight: '400' }}>
+                    <div className="login-form-header">
+                        <h2 className="login-title">Ingreso</h2>
+                        <p className="login-subtitle">
                             Bienvenido. Por favor ingresa tus credenciales.
                         </p>
                     </div>
@@ -70,23 +78,43 @@ const Login = () => {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 placeholder="Usuario"
+                                autoCapitalize="none"
+                                autoCorrect="off"
+                                spellCheck={false}
+                                autoComplete="username"
+                                style={{ textTransform: 'none' }}
                             />
                         </div>
 
                         <div className="form-group">
                             <label htmlFor="password">Contraseña</label>
-                            <input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                placeholder="••••••••"
-                            />
+                            <div className="password-field">
+                                <input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    placeholder="••••••••"
+                                    autoCapitalize="none"
+                                    autoCorrect="off"
+                                    spellCheck={false}
+                                    autoComplete="current-password"
+                                    style={{ textTransform: 'none' }}
+                                />
+                                <button
+                                    type="button"
+                                    className="password-toggle"
+                                    onClick={() => setShowPassword((prev) => !prev)}
+                                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                >
+                                    {showPassword ? <FiEyeOff /> : <FiEye />}
+                                </button>
+                            </div>
                         </div>
                         {error && <div className="error-alert">{error}</div>}
-                        <button type="submit" className="login-btn">
-                            Ingresar
+                        <button type="submit" className={`login-btn${submitting ? ' loading' : ''}`} disabled={submitting}>
+                            {submitting ? 'Ingresando...' : 'Ingresar'}
                         </button>
                     </form>
                 </div>

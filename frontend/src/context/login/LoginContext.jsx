@@ -14,7 +14,7 @@ export const useAuth = () => {
 export const LoginProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   const hasCheckedRef = useRef(false);
@@ -25,16 +25,16 @@ export const LoginProvider = ({ children }) => {
   useEffect(() => {
     const checkSession = async () => {
       if (hasCheckedRef.current) {
-        setLoading(false);
+        setIsCheckingSession(false);
         return;
       }
 
       if (isOffline) {
-        setLoading(false);
+        setIsCheckingSession(false);
         return;
       }
 
-      setLoading(true);
+      setIsCheckingSession(true);
       try {
         const res = await client.get('/users/perfil');
         setUser(res.data?.usuario || null);
@@ -44,7 +44,7 @@ export const LoginProvider = ({ children }) => {
         setIsAuthenticated(false);
       } finally {
         hasCheckedRef.current = true;
-        setLoading(false); // 🔴 CLAVE ABSOLUTA
+        setIsCheckingSession(false);
       }
     };
 
@@ -56,19 +56,22 @@ export const LoginProvider = ({ children }) => {
    */
   const login = async (credentials) => {
     if (isOffline) {
-      showErrorAlert('Sin conexión', 'No hay conexión a internet');
-      return;
+      const offlineError = new Error('No hay conexión a internet.');
+      offlineError.isOffline = true;
+      showErrorAlert('Sin conexión', offlineError.message);
+      throw offlineError;
     }
 
-    setLoading(true);
     try {
       const res = await client.post('/auth/login', credentials);
       setUser(res.data.data.user);
       setIsAuthenticated(true);
       hasCheckedRef.current = true;
       return res.data;
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      setUser(null);
+      setIsAuthenticated(false);
+      throw error;
     }
   };
 
@@ -86,7 +89,6 @@ export const LoginProvider = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
       hasCheckedRef.current = true;
-      window.location.href = '/login';
     }
   };
 
@@ -132,7 +134,8 @@ export const LoginProvider = ({ children }) => {
       value={{
         user,
         isAuthenticated,
-        loading,
+        loading: isCheckingSession,
+        isCheckingSession,
         isOffline,
         login,
         logout

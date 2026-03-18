@@ -54,11 +54,7 @@ const NavigationBar = () => {
             <Nav.Link as={Link} to="/chassis">Flota</Nav.Link>
             <Nav.Link as={Link} to="/company">Empresas</Nav.Link>
             <Nav.Link as={Link} to="/travels">Viajes</Nav.Link>
-            {/* TU DROPDOWN DE EJEMPLO */}
-            <NavDropdown title="Facturacion" id="basic-nav-dropdown">
-              <NavDropdown.Item as={Link} to="/company-payments">Pagos de Empresa</NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/driver-payments">Pagos de Choferes</NavDropdown.Item>
-            </NavDropdown>
+            <Nav.Link as={Link} to="/facturacion">Facturación</Nav.Link>
           </Nav>
 
           {/* SECCIÓN USUARIO Y LOGOUT (A LA DERECHA) */}

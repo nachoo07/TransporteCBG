@@ -1,12 +1,10 @@
 .driver-payments-layout {
-  min-height: 100vh;
   background-color: #f3f4f6;
 }
 
 .driver-payments-container {
   max-width: 1400px;
   margin: 2rem auto;
-  padding: 0 1rem;
 }
 
 .driver-payments-header {
@@ -15,58 +13,29 @@
 
 .driver-payments-header h1 {
   margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 2.2rem;
-  color: #1f2937;
-  font-weight: 800;
+  font-size: 2rem;
+  color: #111827;
+  font-weight: 700;
 }
 
 .driver-payments-header p {
-  margin: 6px 0 0 0;
-  color: #666;
-  font-size: 1.05rem;
-}
-
-.driver-payments-period-filters {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 0.25rem 0;
-}
-
-.driver-payments-period-title {
-  font-weight: 800 !important;
-  color: #111827;
-  background-color: #FF9020;
-  padding: 4px 12px;
-  border-radius: 8px;
-  font-size: 1.3rem !important;
-}
-
-.driver-payments-period-select .MuiOutlinedInput-notchedOutline {
-  border-color: #d1d5db;
-}
-
-.driver-payments-period-select:hover .MuiOutlinedInput-notchedOutline {
-  border-color: #f59e0b;
-}
-
-.driver-payments-period-select.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #FF9020;
+  margin: 0.4rem 0 0;
+  color: #6b7280;
+  font-size: 0.95rem;
 }
 
 .driver-payments-modal-paper {
   border-radius: 14px !important;
   overflow: hidden;
+
 }
 
 .driver-payments-modal-title {
   background: #FF9020;
-  color: #111827;
-  font-weight: 800 !important;
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 700;
 }
 
 .driver-payments-modal-actions {
@@ -188,12 +157,12 @@
 
 @media (max-width: 900px) {
   .driver-payments-container {
-    margin-top: 1rem;
-    padding: 0 0.75rem;
+    margin: 1rem auto;
+    padding: 0 0.75rem 1rem;
   }
 
   .driver-payments-header h1 {
-    font-size: 1.7rem;
+    font-size: 1.5rem;
   }
 
   .driver-adjust-form-row {

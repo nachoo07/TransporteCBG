@@ -52,9 +52,10 @@
   color: white !important;
 }
 
-.navbar-nav {
-  margin-right: 0px !important;
+.navbar-links-container {
+  margin-right: 0 !important;
   margin-left: 130px !important;
+  gap: 0.25rem;
 }
 
 .navbar-collapse {
@@ -126,6 +127,11 @@
 
 /* Ajustes Responsive extra si es necesario */
 @media (max-width: 991px) {
+  .navbar-nav {
+    margin-top: 0.5rem;
+    margin-left: 0 !important;
+  }
+
   .user-actions {
     border-top: 1px solid rgba(255, 255, 255, 0.2);
     padding-top: 1rem;

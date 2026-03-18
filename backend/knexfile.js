@@ -9,7 +9,7 @@ export default {
     client: 'mysql2', // Usamos el driver que ya instalaste
     connection: CONNECTION_STRING,
     pool: {
-      min: 2,
+      min: 0,
       max: 10
     },
     migrations: {
@@ -34,7 +34,7 @@ export default {
     client: 'mysql2',
     connection: CONNECTION_STRING,
     pool: {
-      min: 2,
+      min: 0,
       max: 10
     },
     migrations: {

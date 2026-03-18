@@ -27,6 +27,11 @@ const ChassisDetailModal = ({ isOpen, onClose, chassis }) => {
                 return '';
         }
     };
+
+    const formatNonExpiringDate = (dateString) => {
+        if (!dateString) return 'No vence';
+        return `${formatDate(dateString)} · No vence`;
+    };
     return (
         <div className="cdm-overlay" onClick={onClose}>
             <div className="cdm-content" onClick={(e) => e.stopPropagation()}>
@@ -67,6 +72,19 @@ const ChassisDetailModal = ({ isOpen, onClose, chassis }) => {
                                     {chassis.activo ? 'Activo' : 'Archivado'}
                                 </span>
                             </div>
+                            <div className="cdm-card">
+                                <label>Título del automotor</label>
+                                {chassis.url_titulo_chasis ? (
+                                    <button
+                                        className="cdm-btn-link"
+                                        onClick={() => openDoc(chassis.url_titulo_chasis)}
+                                    >
+                                        Ver documento
+                                    </button>
+                                ) : (
+                                    <span>No registra</span>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -78,10 +96,10 @@ const ChassisDetailModal = ({ isOpen, onClose, chassis }) => {
                             <div className={`cdm-card ${getVencimientoClass(chassis.estado_cedula_chasis)}`}>
                                 <label>Cédula</label>
                                 <span>{formatDate(chassis.vencimiento_cedula_chasis)}</span>
-                                {chassis.url_vtv_chasis && (
+                                {chassis.url_cedula_chasis && (
                                     <button
                                         className="cdm-btn-link"
-                                        onClick={() => openDoc(chassis.url_vtv_chasis)}
+                                        onClick={() => openDoc(chassis.url_cedula_chasis)}
                                     >
                                         Ver documento
                                     </button>
@@ -115,7 +133,7 @@ const ChassisDetailModal = ({ isOpen, onClose, chassis }) => {
 
                             <div className={`cdm-card ${getVencimientoClass(chassis.estado_tipificacion_carga_chasis)}`}>
                                 <label>Tipificación</label>
-                                <span>{formatDate(chassis.vencimiento_tipificacion_carga_chasis)}</span>
+                                <span>{formatNonExpiringDate(chassis.vencimiento_tipificacion_carga_chasis)}</span>
                                 {chassis.url_tipificacion_carga_chasis && (
                                     <button
                                         className="cdm-btn-link"
@@ -128,7 +146,7 @@ const ChassisDetailModal = ({ isOpen, onClose, chassis }) => {
 
                             <div className={`cdm-card ${getVencimientoClass(chassis.estado_homologacion_chasis)}`}>
                                 <label>Homologación</label>
-                                <span>{formatDate(chassis.vencimiento_homologacion_chasis)}</span>
+                                <span>{formatNonExpiringDate(chassis.vencimiento_homologacion_chasis)}</span>
                                 {chassis.url_homologacion_chasis && (
                                     <button
                                         className="cdm-btn-link"

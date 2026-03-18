@@ -29,7 +29,7 @@
   cursor: not-allowed;
 }
 .driver-layout { background-color: #f3f4f6; min-height: 100vh; }
-.driver-container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+.driver-container {  margin: 2rem auto; padding: 0 1rem; }
 
 .driver-header {
   display: flex;
@@ -39,6 +39,11 @@
 }
 
 .driver-title h1 { margin: 0; }
+.driver-subtitle {
+  margin: 0.5rem 0 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
 
 
 .btn-add-driver {
@@ -80,23 +85,79 @@
   background: white;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
+  border-top: 4px solid #ff9020;
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 62vh;
+
 }
 
-.driver-table { width: 100%; border-collapse: collapse; }
+.driver-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  table-layout: auto;
+}
 .driver-table th {
-  background: #f9fafb;
+  background: linear-gradient(180deg, #fff7ed 0%, #fffbf5 100%);
   padding: 1rem;
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: #6b7280;
+  color: #9a3412;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
-.driver-table td { padding: 1rem; }
+.driver-table td {
+  padding: 0.9rem 1rem;
+  vertical-align: middle;
+}
+
+.driver-table th:nth-child(1),
+.driver-table td:nth-child(1) {
+  min-width: 170px;
+  width: 1%;
+}
+
+.driver-table th:nth-child(2),
+.driver-table td:nth-child(2) {
+  min-width: 92px;
+  width: 1%;
+  white-space: nowrap;
+}
+
+.driver-table th:nth-child(3),
+.driver-table td:nth-child(3) {
+  width: 1%;
+  min-width: 56px;
+  white-space: nowrap;
+}
+
+.driver-table th:nth-child(4),
+.driver-table td:nth-child(4) {
+  width: 1%;
+  min-width: 110px;
+  white-space: nowrap;
+}
 
 .driver-name-cell small {
   display: block;
   font-size: 0.75rem;
   color: #6b7280;
+}
+
+.driver-full-name {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.driver-empty-state {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 /* CARDS MOBILE */
@@ -152,12 +213,110 @@
   font-size: 1.1rem;
 }
 
+
+
 /* TABS */
 .driver-tabs {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
   margin-bottom: 1rem;
+}
+
+.driver-toolbar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.driver-control-panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1rem 1rem 1.1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.driver-control-header {
+  margin-bottom: 0.85rem;
+}
+
+.driver-control-title {
+  display: inline-block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.driver-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.driver-search-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.driver-search-wrap-wide {
+  flex: 1.35;
+  min-width: 0;
+}
+
+.driver-search-input-compact {
+  width: 100%;
+  min-width: 320px;
+}
+
+.driver-header-actions-compact {
+  width: auto;
+}
+
+.driver-tabs-row {
+  justify-content: flex-start;
+}
+
+.driver-tabs-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.driver-tabs-segmented {
+  background: #eef2f7;
+  border-radius: 16px;
+  padding: 0;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.driver-tab-btn {
+  border-radius: 0;
+  border-bottom: none;
+  padding: 0.82rem 1.15rem;
+  color: #6b7280;
+  font-size: 0.92rem;
+  min-height: 48px;
+}
+
+.driver-tab-btn.active {
+  color: #111827;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+.driver-add-btn {
+  white-space: nowrap;
 }
 .tab-btn {
   padding: 0.75rem 1.5rem;
@@ -167,9 +326,12 @@
   cursor: pointer;
   border-bottom: 3px solid transparent;
 }
-.tab-btn.active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+
+.driver-tab-btn.active {
+  color: #111827;
+  background: #ffffff;
+  border-bottom-color: transparent;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
 }
 
 /* Botón más integrado */
@@ -194,7 +356,7 @@
   padding: 0.5rem 1rem;
   border: 1px solid #d1d5db;
   border-radius: 20px;
-  width: 350px;
+  width: 400px;
 }
 
 .driver-search-input:focus {
@@ -211,6 +373,37 @@
   .desktop-only { display: none; }
   .mobile-only { display: block; }
   .driver-stats { grid-template-columns: 1fr; }
+
+  .driver-container {
+    margin: 1rem auto;
+    padding: 0 0.75rem 1rem;
+  }
+
+  .driver-toolbar-top,
+  .driver-toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .driver-search-input-compact,
+  .driver-header-actions-compact,
+  .driver-header-actions-compact .btn-add-driver,
+  .driver-tabs-segmented {
+    width: 100%;
+  }
+
+  .driver-tabs-group {
+    width: 100%;
+  }
+
+  .driver-tabs-group .tab-btn {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .driver-table-wrapper {
+    max-height: 58vh;
+  }
 }
 
 /* New saving indicator styles */

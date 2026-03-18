@@ -46,9 +46,9 @@ import { useAuth } from './context/login/LoginContext';
 import Spinner from './components/ui/Spinner';
 
 function AppContent() {
-  const { loading, isOffline } = useAuth();
+  const { isCheckingSession, isOffline } = useAuth();
   // Loader visual
-  if (loading) {
+  if (isCheckingSession) {
     return <Spinner message="Verificando sesión..." />;
   }
   // Badge visual de conexión

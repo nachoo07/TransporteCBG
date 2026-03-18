@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './chassisFormModal.css';
 
-const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit }) => {
+const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit, isSaving = false }) => {
     
     // Helper para fechas
     const formatDateForInput = (isoString) => isoString ? isoString.split('T')[0] : '';
@@ -89,7 +89,7 @@ const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit }) => {
         if (filesToDelete['url_vtv_chasis']) dataToSend.append('eliminar_vtv', 'true');
         if (filesToDelete['url_titulo_chasis']) dataToSend.append('eliminar_titulo', 'true');
         if (filesToDelete['url_senasa_chasis']) dataToSend.append('eliminar_senasa', 'true');
-        if (filesToDelete['url_tipificacion_carga_chasis']) dataToSend.append('eliminar_tipificacion', 'true');
+        if (filesToDelete['url_tipificacion_carga_chasis']) dataToSend.append('eliminar_tipificacion_carga', 'true');
         if (filesToDelete['url_homologacion_chasis']) dataToSend.append('eliminar_homologacion', 'true');
 
         onSubmit(dataToSend);
@@ -146,7 +146,7 @@ const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit }) => {
                         <div className="cfm-file-actions">
                             <button type="button" onClick={() => window.open(currentUrl, '_blank')} className="cfm-btn-mini view" title="Ver">👁️</button>
                             <label htmlFor={`file-${inputName}`} className="cfm-btn-mini replace" title="Cambiar">🔄</label>
-                            <button type="button" onClick={() => handleMarkDelete(inputName)} className="cfm-btn-mini delete" title="Eliminar">🗑️</button>
+                        <button type="button" onClick={() => handleMarkDelete(inputName)} className="cfm-btn-mini delete" title="Eliminar">🗑️</button>
                         </div>
                     </div>
                 )}
@@ -270,9 +270,18 @@ const ChassisFormModal = ({ isOpen, onClose, onSubmit, chassisToEdit }) => {
                         <FileControl label="Doc. Homologación" inputName="url_homologacion_chasis" currentUrl={chassisToEdit?.url_homologacion_chasis} />
                     </div>
 
+                    {isSaving && (
+                      <div className="cfm-saving-indicator">
+                        <div className="cfm-spinner"></div>
+                        <span>
+                          {chassisToEdit ? 'Actualizando chasis…' : 'Creando chasis…'}
+                        </span>
+                      </div>
+                    )}
+
                     <div className="cfm-actions">
-                        <button type="button" onClick={onClose} className="cfm-btn-cancel">Cancelar</button>
-                        <button type="submit" className="cfm-btn-save">{chassisToEdit ? 'Actualizar Chasis' : 'Guardar Chasis'}</button>
+                        <button type="button" onClick={onClose} className="cfm-btn-cancel" disabled={isSaving}>Cancelar</button>
+                        <button type="submit" className="cfm-btn-save" disabled={isSaving}>{isSaving ? 'Guardando…' : chassisToEdit ? 'Actualizar Chasis' : 'Guardar Chasis'}</button>
                     </div>
                 </form>
                 </div>

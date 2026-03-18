@@ -4,7 +4,8 @@ import { useDriver } from '../../context/driver/DriverContext';
 import { useChasis } from '../../context/chasis/ChasisContext';
 import { useCoupled } from '../../context/coupled/CoupledContext';
 import { useCompany } from '../../context/company/CompanyContext';
-import { showErrorAlert } from '../../utils/alerts/Alerts';
+import Swal from 'sweetalert2';
+import { showConfirmAlert, showErrorAlert } from '../../utils/alerts/Alerts';
 import { getErrorMsg } from '../../utils/helperError/ErrorMsg';
 import './travelFormModal.css';
 
@@ -18,13 +19,11 @@ const DECIMAL_INPUT_FIELDS = new Set([
   'advance_amount',
   'fuel_liters',
   'fuel_amount',
-]);
-
-const INTEGER_INPUT_FIELDS = new Set([
   'fuel_km',
   'fuel_km_end',
 ]);
 
+const INTEGER_INPUT_FIELDS = new Set([]);
 const NUMERIC_FIELDS = new Set([...DECIMAL_INPUT_FIELDS, ...INTEGER_INPUT_FIELDS]);
 const CAMEL_CASE_FIELDS = new Set([
   'origin',
@@ -86,9 +85,19 @@ const formatDecimalInput = (value, { maxDecimals = 3 } = {}) => {
 };
 
 const sanitizeDecimalInput = (value) => {
-  const digits = String(value ?? '').replace(/[^\d]/g, '');
-  if (!digits) return '';
-  return formatIntegerInput(digits);
+  const raw = String(value ?? '').replace(/\s+/g, '').replace(/[^\d,.-]/g, '');
+  if (!raw) return '';
+
+  const unsigned = raw.replace(/-/g, '');
+  const parts = unsigned.split(/[,.]/);
+  const integerPart = (parts.shift() || '').replace(/[^\d]/g, '');
+  const decimalPart = parts.join('').replace(/[^\d]/g, '');
+  const hasTrailingSeparator = /[,.]$/.test(unsigned);
+
+  if (!integerPart && !decimalPart) return '';
+  if (!decimalPart && !hasTrailingSeparator) return integerPart;
+  if (hasTrailingSeparator && !decimalPart) return `${integerPart},`;
+  return `${integerPart},${decimalPart.slice(0, 3)}`;
 };
 
 const normalizeToApiNumberString = (value) => {
@@ -119,6 +128,50 @@ const formatTripDate = (value) => {
 };
 
 const normalizeDateYmd = (value) => String(value || '').trim().slice(0, 10);
+const getTodayLocalYmd = () => {
+  const today = new Date();
+  return new Date(today.getTime() - (today.getTimezoneOffset() * 60000))
+    .toISOString()
+    .split('T')[0];
+};
+
+const createEmptyFormData = () => ({
+  travel_date: getTodayLocalYmd(),
+  driver_id: '',
+  chassis_id: '',
+  coupled_id: '',
+  company_id: '',
+  origin: '',
+  destination: '',
+  quantity_loaded: '',
+  quantity_unloaded: '',
+  receipt_number: '',
+  route_sheet: '',
+  proforma_number: '',
+  special_notes: '',
+  tariff_value: '',
+  net_value: '',
+  iva_value: '',
+  fixed_price: '',
+  invoice_number: '',
+  invoice_date: '',
+  carta_de_porte: '',
+  advance_amount: '',
+  advance_method: '',
+  advance_responsible: '',
+  fuel_station: '',
+  fuel_liters: '',
+  fuel_amount: '',
+  fuel_km: '',
+  fuel_km_end: '',
+  fuel_invoice: '',
+  liquidation_status: 'FALTA',
+  invoice_status: 'FALTA',
+  payment_status: 'DEBEN',
+  payment_order: '',
+  general_status: 'INCOMPLETO',
+});
+
 const toCamelCaseWords = (value) =>
   String(value || '')
     .toLowerCase()
@@ -164,57 +217,19 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
   const [multipleModeEnabled, setMultipleModeEnabled] = useState(false);
   const [selectedRelatedIds, setSelectedRelatedIds] = useState([]);
 
-  const [formData, setFormData] = useState({
-    // fecha_viaje
-    travel_date: '',
-    // Foreign Keys
-    driver_id: '',
-    chassis_id: '',
-    coupled_id: '',
-    company_id: '',
-    // Ruta y logística (nombres esperados por backend/Joi)
-    origin: '',
-    destination: '',
-    quantity_loaded: '',
-    quantity_unloaded: '',
-    // Documentación
-    receipt_number: '',
-    route_sheet: '',
-    proforma_number: '',
-    special_notes: '',
-    // Tarifa y valores
-    tariff_value: '',
-    net_value: '',
-    iva_value: '',
-    fixed_price: '',
-    // Facturacion del viaje
-    invoice_number: '',
-    invoice_date: '', /*NO ESTA */
-    carta_de_porte: '',
-    // Adelantos
-    advance_amount: '',
-    advance_method: '',
-    advance_responsible: '',
-    // Combustible
-    fuel_station: '',
-    fuel_liters: '',
-    fuel_amount: '',
-    fuel_km: '',
-    fuel_km_end: '',
-    fuel_invoice: '',
-    // Estados
-    liquidation_status: 'FALTA',
-    invoice_status: 'FALTA',
-    payment_status: 'DEBEN',
-    payment_order: '',
-    general_status: 'INCOMPLETO',
-  });
+  const [formData, setFormData] = useState(createEmptyFormData);
 
   // --- 1. CARGA DE DATOS AL ABRIR EL MODAL ---
   useEffect(() => {
     if (isOpen) {
       setMultipleModeEnabled(false);
       setSelectedRelatedIds([]);
+      setInvoiceFile(null);
+      setPreviewUrl(null);
+      setLiquidationFile(null);
+      setLiquidationPreviewUrl(null);
+      setFuelInvoicePhoto(null);
+      setFuelInvoicePhotoUrl(null);
       setDeleteInvoicePhoto(false);
       setDeleteLiquidationFile(false);
       setDeleteFuelInvoicePhoto(false);
@@ -267,8 +282,8 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
           fuel_station: travel.estacion_nombre || '',
           fuel_liters: formatDecimalInput(travel.combustible_litros),
           fuel_amount: formatDecimalInput(travel.combustible_monto),
-          fuel_km: formatIntegerInput(travel.combustible_km),
-          fuel_km_end: formatIntegerInput(travel.combustible_km_fin),
+          fuel_km: formatDecimalInput(travel.combustible_km),
+          fuel_km_end: formatDecimalInput(travel.combustible_km_fin),
           fuel_invoice: travel.factura_combustible || '',
           liquidation_status: travel.estado_liquidacion || 'FALTA',
           invoice_status: travel.estado_facturacion || 'FALTA',
@@ -286,20 +301,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
         }
         if (travel.foto_factura_combustible) setFuelInvoicePhotoUrl(travel.foto_factura_combustible);
       } else {
-        // CORRECCIÓN: Obtener fecha local en formato YYYY-MM-DD
-        const today = new Date();
-        const localISODate = new Date(today.getTime() - (today.getTimezoneOffset() * 60000))
-          .toISOString()
-          .split('T')[0];
-
-        setFormData(prev => ({
-          ...prev,
-          travel_date: localISODate, // Usamos la fecha local corregida
-          driver_id: '',
-          company_id: '',
-          chassis_id: '',
-          coupled_id: ''
-        }));
+        setFormData(createEmptyFormData());
       }
     }
   }, [isOpen, travel, getDrivers, getChasis, getCoupled, getCompanies]);
@@ -443,8 +445,8 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
         const iva = neto * 0.21;
         setFormData(prev => ({
           ...prev,
-          net_value: formatIntegerInput(neto),
-          iva_value: formatIntegerInput(iva)
+          net_value: formatDecimalInput(neto, { maxDecimals: 2 }),
+          iva_value: formatDecimalInput(iva, { maxDecimals: 2 })
         }));
       }
     }
@@ -458,8 +460,8 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
         const iva = fijo * 0.21;
         setFormData(prev => ({
           ...prev,
-          net_value: formatIntegerInput(fijo),
-          iva_value: formatIntegerInput(iva),
+          net_value: formatDecimalInput(fijo, { maxDecimals: 2 }),
+          iva_value: formatDecimalInput(iva, { maxDecimals: 2 }),
         }));
       }
     }
@@ -573,22 +575,25 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
       ) {
         const totalTripsToUpdate = selectedRelatedIds.length + 1;
         if (lockInvoiceFieldsInMultiple && applyInvoiceInBulk) {
-          window.alert(
-            'No podés aplicar facturación múltiple porque en la empresa hay viajes mezclados (algunos facturados y otros no). Completá o corregí facturación de forma individual.',
+          showErrorAlert(
+            'Facturación múltiple bloqueada',
+            'Hay viajes mezclados en la empresa: algunos ya están facturados y otros no. Completá o corregí la facturación de forma individual.',
           );
           setLoading(false);
           return;
         }
         if (lockLiquidationFieldsInMultiple && applyLiquidationInBulk) {
-          window.alert(
-            'No podés aplicar liquidación múltiple porque en la empresa hay viajes mezclados (algunos liquidados y otros no). Completá o corregí liquidación de forma individual.',
+          showErrorAlert(
+            'Liquidación múltiple bloqueada',
+            'Hay viajes mezclados en la empresa: algunos ya están liquidados y otros no. Completá o corregí la liquidación de forma individual.',
           );
           setLoading(false);
           return;
         }
         if (!applyInvoiceInBulk && !applyLiquidationInBulk) {
-          window.alert(
-            'Para edición múltiple, cargá al menos un dato nuevo de facturación o liquidación en el viaje actual.',
+          showErrorAlert(
+            'Sin cambios para aplicar',
+            'Para usar la edición múltiple, cargá al menos un dato nuevo de facturación o liquidación en el viaje actual.',
           );
           setLoading(false);
           return;
@@ -608,20 +613,30 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
             .map((item) => `- ${formatTripDate(item.fecha_viaje)} | ${item.origen || '-'} → ${item.destino || '-'}`)
             .join('\n');
           const extra = blockedTrips.length > 5 ? `\n...y ${blockedTrips.length - 5} viaje(s) más` : '';
-          window.alert(
-            'No podés hacer edición múltiple porque hay viajes con datos ya cargados en los campos que estás aplicando.\n' +
-            'Quitalos de la selección para continuar.\n\n' +
-            summary +
-            extra,
-          );
+          await Swal.fire({
+            icon: 'warning',
+            title: 'No se puede aplicar la edición múltiple',
+            html:
+              '<p>Hay viajes con datos ya cargados en los campos que querés copiar.</p>' +
+              '<p>Quitalos de la selección para continuar.</p>' +
+              `<pre style="text-align:left;background:#f8fafc;padding:12px;border-radius:8px;max-height:220px;overflow:auto;">${summary}${extra}</pre>`,
+            confirmButtonColor: '#FF9020',
+            confirmButtonText: 'Entendido',
+          });
           setLoading(false);
           return;
         }
 
-        const confirmed = window.confirm(
-          `Vas a actualizar ${totalTripsToUpdate} viajes (incluye el viaje actual).\n` +
-          'Campos aplicados: facturación y liquidación del formulario actual.\n' +
-          '¿Confirmás aplicar estos cambios en lote?',
+        const confirmed = await showConfirmAlert(
+          'Aplicar actualización múltiple',
+          `Se van a actualizar ${totalTripsToUpdate} viajes, incluyendo el actual, con los datos de facturación y liquidación cargados en este formulario.`,
+          {
+            icon: 'question',
+            confirmButtonColor: '#FF9020',
+            cancelButtonColor: '#9ca3af',
+            confirmButtonText: 'Aplicar cambios',
+            cancelButtonText: 'Cancelar',
+          },
         );
         if (!confirmed) {
           setLoading(false);
@@ -654,6 +669,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
   };
 
   const handleClose = () => {
+    setFormData(createEmptyFormData());
     setInvoiceFile(null);
     setPreviewUrl(null);
     setLiquidationFile(null);
@@ -694,7 +710,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
       : `${new Intl.NumberFormat('es-AR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 3,
-      }).format(litrosPorKm)} L/Km`;
+      }).format(litrosPorKm)}`;
 
   const computeTripTotal = (item) => {
     const neto = Number(item?.valor_neto ?? item?.precio_fijo ?? 0);
@@ -1033,10 +1049,10 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                       </div>
                       <div className="form-row">
                         <div className="form-group">
-                          <label htmlFor="fuel_liters">Litros de Combustible (L)</label>
+                          <label htmlFor="fuel_liters">Litros de Combustible</label>
                           <input
                             type="text"
-                            inputMode="numeric"
+                            inputMode="decimal"
                             id="fuel_liters"
                             name="fuel_liters"
                             value={formData.fuel_liters}
@@ -1048,7 +1064,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                           <label htmlFor="fuel_amount">Monto Combustible</label>
                           <input
                             type="text"
-                            inputMode="numeric"
+                            inputMode="decimal"
                             id="fuel_amount"
                             name="fuel_amount"
                             value={formData.fuel_amount}
@@ -1059,10 +1075,10 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                       </div>
                       <div className="form-row">
                         <div className="form-group">
-                          <label htmlFor="fuel_km">KM al Cargar Combustible (Km)</label>
+                          <label htmlFor="fuel_km">KM al Cargar Combustible</label>
                           <input
                             type="text"
-                            inputMode="numeric"
+                            inputMode="decimal"
                             id="fuel_km"
                             name="fuel_km"
                             value={formData.fuel_km}
@@ -1071,10 +1087,10 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                           />
                         </div>
                         <div className="form-group">
-                          <label htmlFor="fuel_km_end">KM al Llegar (Km)</label>
+                          <label htmlFor="fuel_km_end">KM al Llegar</label>
                           <input
                             type="text"
-                            inputMode="numeric"
+                            inputMode="decimal"
                             id="fuel_km_end"
                             name="fuel_km_end"
                             value={formData.fuel_km_end}
@@ -1087,28 +1103,44 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                         <>
                           <div className="form-row">
                             <div className="form-group">
-                              <label>KM del viaje (Km)</label>
-                              <input type="text" value={kmViaje === null ? '' : `${Math.round(kmViaje)} Km`} disabled />
+                              <label>KM del viaje</label>
+                              <input
+                                type="text"
+                                value={kmViaje === null ? '' : formatDecimalInput(kmViaje, { maxDecimals: 2 })}
+                                disabled
+                              />
                             </div>
                             <div className="form-group">
-                              <label>Consumo (L/Km)</label>
+                              <label>Consumo</label>
                               <input type="text" value={litrosPorKmDisplay} disabled />
                             </div>
                           </div>
                           <div className="form-row-1">
 
                             <div className="form-group">
-                              <label>Referencia eficiente (0.32 × KM)</label>
-                              <input type="text" value={esperado032 === null ? '' : String(Math.round(esperado032))} disabled />
+                              <label>Referencia eficiente (0.32 x KM)</label>
+                              <input
+                                type="text"
+                                value={esperado032 === null ? '' : formatDecimalInput(esperado032, { maxDecimals: 2 })}
+                                disabled
+                              />
                             </div>
                             <div className="form-group">
-                              <label>Máximo tolerado (0.34 × KM)</label>
-                              <input type="text" value={esperado034 === null ? '' : String(Math.round(esperado034))} disabled />
+                              <label>Máximo tolerado (0.34 x KM)</label>
+                              <input
+                                type="text"
+                                value={esperado034 === null ? '' : formatDecimalInput(esperado034, { maxDecimals: 2 })}
+                                disabled
+                              />
                             </div>
 
                             <div className="form-group">
-                              <label>Diferencia vs eficiente (Litros - 0.32×KM)</label>
-                              <input type="text" value={diferenciaVs032 === null ? '' : String(Math.round(diferenciaVs032))} disabled />
+                              <label>Diferencia vs eficiente (Litros - 0.32xKM)</label>
+                              <input
+                                type="text"
+                                value={diferenciaVs032 === null ? '' : formatDecimalInput(diferenciaVs032, { maxDecimals: 2 })}
+                                disabled
+                              />
                             </div>
                           </div>
 
@@ -1116,7 +1148,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                       )}
                       {esIneficiente && (
                         <div className="alert-info" style={{ borderLeftColor: '#dc2626', background: '#fee2e2', color: '#991b1b' }}>
-                          ⚠️ Consumo ineficiente: supera 0.34 L/KM (revisar combustible gastado).
+                          ⚠️ Consumo ineficiente: supera 0.34 (revisar combustible gastado).
                         </div>
                       )}
 
@@ -1205,7 +1237,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                               <label htmlFor="tariff_value">Valor de Tarifa</label>
                               <input
                                 type="text"
-                                inputMode="numeric"
+                                inputMode="decimal"
                                 id="tariff_value"
                                 name="tariff_value"
                                 value={formData.tariff_value}
@@ -1218,7 +1250,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                               <label htmlFor="net_value">Valor Neto</label>
                               <input
                                 type="text"
-                                inputMode="numeric"
+                                inputMode="decimal"
                                 id="net_value"
                                 name="net_value"
                                 value={formData.net_value}
@@ -1232,7 +1264,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                               <label htmlFor="iva_value">Valor IVA</label>
                               <input
                                 type="text"
-                                inputMode="numeric"
+                                inputMode="decimal"
                                 id="iva_value"
                                 name="iva_value"
                                 value={formData.iva_value}
@@ -1269,7 +1301,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                               <label htmlFor="fixed_price">Precio Fijo</label>
                               <input
                                 type="text"
-                                inputMode="numeric"
+                                inputMode="decimal"
                                 id="fixed_price"
                                 name="fixed_price"
                                 value={formData.fixed_price}
@@ -1397,7 +1429,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                             type="file"
                             id="invoice_photo"
                             name="invoice_photo"
-                            accept="image/*"
+                            accept="image/*,application/pdf"
                             onChange={handleFileChange}
                             disabled={lockInvoiceFieldsInMultiple}
                             style={{ display: 'none' }}
@@ -1571,18 +1603,7 @@ const TravelFormModal = ({ isOpen, onClose, travel = null }) => {
                     <div className="alert-info">
                       ℹ️ El estado general se actualiza automáticamente según liquidación y facturación
                     </div>
-                    {multipleModeEnabled && lockInvoiceFieldsInMultiple && (
-                      <div className="alert-info" style={{ borderLeftColor: '#b45309', background: '#fffbeb', color: '#92400e' }}>
-                        ⚠️ Facturación múltiple bloqueada: hay viajes de la empresa mezclados (algunos facturados y otros no).
-                      </div>
-                    )}
-                    {multipleModeEnabled && lockLiquidationFieldsInMultiple && (
-                      <div className="alert-info" style={{ borderLeftColor: '#b45309', background: '#fffbeb', color: '#92400e' }}>
-                        ⚠️ Liquidación múltiple bloqueada: hay viajes de la empresa mezclados (algunos liquidados y otros no).
-                      </div>
-                    )}
-
-                    {travel && (
+                    {false && travel && (
                       <div className="form-section">
                         <h3>Facturación Múltiple</h3>
                         <div className="form-group">

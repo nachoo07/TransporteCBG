@@ -58,9 +58,9 @@ const ChasisProvider = ({ children }) => {
             const res = await client.post('/chassis/create', chasisData);
 
             const created = res.data.data || res.data;
-            // El backend ya incluye info_completa calculado
-
             setChasis((prev) => [...prev, created]);
+            await getChasis();
+            await getInactiveChasis();
 
             // ✅ ÉXITO: Usamos el Toast (Sonner)
             showSuccessToast('¡Chasis creado correctamente!');
@@ -82,13 +82,14 @@ const ChasisProvider = ({ children }) => {
             setChasis((prev) =>
                 prev.map((oldChasis) => {
                     if (oldChasis.id === id) {
-                        // Mezclamos datos viejos con actualizados del servidor
-                        // El backend ya recalculó info_completa
                         return { ...oldChasis, ...updatedFromServer, id };
                     }
                     return oldChasis;
                 })
             );
+
+            await getChasis();
+            await getInactiveChasis();
 
             showSuccessToast('Chasis actualizado correctamente.');
             return true;

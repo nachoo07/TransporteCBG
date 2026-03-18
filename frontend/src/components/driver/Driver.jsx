@@ -95,40 +95,45 @@ const Driver = () => {
           </div>
 
         </div>
-        {/* TABS */}
-        <div className="driver-tabs">
-          <div>
-            <button
-              className={`tab-btn ${activeTab === 'activos' ? 'active' : ''}`}
-              onClick={() => setActiveTab('activos')}
-            >
-              👤 Activos {drivers.length}
-            </button>
-            <button
-              className={`tab-btn ${activeTab === 'inactivos' ? 'active' : ''}`}
-              onClick={() => setActiveTab('inactivos')}
-            >
-              📦 Archivados {inactiveDrivers.length}
-            </button>
+        <div className="driver-control-panel">
+          <div className="driver-control-header">
+            <span className="driver-control-title">Gestión de choferes</span>
           </div>
-          {/* BUSCADOR */}
-          <div >
-            <input
-              type="text"
-              className="driver-search-input"
-              placeholder="Buscar por nombre, apellido o Dni..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-          {activeTab === 'activos' && (
-            <div className="driver-header-actions">
-              <button className="btn-add-driver subtle" onClick={handleOpenCreate}>
-                ➕ Nuevo Chofer
+
+          <div className="driver-toolbar-row">
+            <div className="driver-tabs-group driver-tabs-segmented">
+              <button
+                className={`tab-btn driver-tab-btn ${activeTab === 'activos' ? 'active' : ''}`}
+                onClick={() => setActiveTab('activos')}
+              >
+                Activos ({drivers.length})
+              </button>
+              <button
+                className={`tab-btn driver-tab-btn ${activeTab === 'inactivos' ? 'active' : ''}`}
+                onClick={() => setActiveTab('inactivos')}
+              >
+                Archivados ({inactiveDrivers.length})
               </button>
             </div>
-          )}
 
+            <div className="driver-search-wrap driver-search-wrap-wide">
+              <input
+                type="text"
+                className="driver-search-input driver-search-input-compact"
+                placeholder="Buscar por nombre, apellido o DNI..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+
+            {activeTab === 'activos' && (
+              <div className="driver-header-actions driver-header-actions-compact">
+                <button className="btn-add-driver subtle driver-add-btn" onClick={handleOpenCreate}>
+                  ➕ Nuevo Chofer
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         {/* ACTIVOS */}
         {activeTab === 'activos' && (
@@ -144,13 +149,19 @@ const Driver = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginated(activeList).map(drv => {
+                  {activeList.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="driver-empty-state">
+                        No hay choferes activos para mostrar.
+                      </td>
+                    </tr>
+                  ) : paginated(activeList).map(drv => {
                     const config = getStatusConfig(drv.estado_general);
                     return (
                       <tr key={drv.id}>
                         <td>
                           <div className="driver-name-cell">
-                            <strong>{drv.nombre?.charAt(0).toUpperCase() + drv.nombre?.slice(1)} {drv.apellido?.charAt(0).toUpperCase() + drv.apellido?.slice(1)}</strong>
+                            <strong className="driver-full-name">{drv.nombre?.charAt(0).toUpperCase() + drv.nombre?.slice(1)} {drv.apellido?.charAt(0).toUpperCase() + drv.apellido?.slice(1)}</strong>
                             <small>Dni {drv.dni}</small>
                           </div>
                         </td>
@@ -168,15 +179,16 @@ const Driver = () => {
                         </td>
                         <td>
                           <div className="action-buttons">
-                            <button onClick={() => navigate(`/panel-driver/${drv.id}`)} className="btn-icon view-icon">👁️</button>
-                            <button onClick={() => handleOpenEdit(drv)} className="btn-icon edit-icon">✏️</button>
+                            <button onClick={() => navigate(`/panel-driver/${drv.id}`)} className="btn-action view-icon">👁️</button>
+                            <button onClick={() => handleOpenEdit(drv)} className="btn-action edit-icon">✏️</button>
                             <button
                               onClick={async () => {
                                 await deleteDriver(drv.id);
                               }}
-                              className="btn-icon delete-icon"
+                              className="btn-action delete-icon"
+                              title="Archivar"
                             >
-                              🗑️
+                              🗂️
                             </button>
                           </div>
                         </td>
@@ -230,7 +242,13 @@ const Driver = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginated(inactiveList).map(drv => (
+                  {inactiveList.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="driver-empty-state">
+                        No hay choferes archivados para mostrar.
+                      </td>
+                    </tr>
+                  ) : paginated(inactiveList).map(drv => (
                     <tr key={drv.id} className="inactive-row">
                       <td><strong>{drv.nombre?.charAt(0).toUpperCase() + drv.nombre?.slice(1)} {drv.apellido?.charAt(0).toUpperCase() + drv.apellido?.slice(1)}</strong></td>
                       <td>

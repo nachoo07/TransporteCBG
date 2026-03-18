@@ -213,7 +213,14 @@ const Home = () => {
               <div className="ms-icon bg-orange">🚛</div>
               <div>
                 <span className="ms-value">{chasis.length}</span>
-                <span className="ms-label">Parque Automotor</span>
+                <span className="ms-label">Chasis</span>
+              </div>
+            </div>
+            <div className="mini-stat-card">
+              <div className="ms-icon bg-orange">🛻</div>
+              <div>
+                <span className="ms-value">{coupled.length}</span>
+                <span className="ms-label">Acoplados</span>
               </div>
             </div>
             <div className="mini-stat-card">
@@ -248,10 +255,10 @@ const Home = () => {
                   <span className="mb-icon">🔐</span> Usuarios
                 </Link>
                 
-                <Link to="/company-payments" className="module-btn">
+                <Link to="/facturacion" className="module-btn">
                   <span className="mb-icon">🏦</span> Pagos Empresas
                 </Link>
-                <Link to="/pagos-choferes" className="module-btn">
+                <Link to="/facturacion" className="module-btn">
                   <span className="mb-icon">👨‍✈️</span> Pagos Choferes
                 </Link>
               </div>
@@ -280,6 +287,7 @@ const Home = () => {
                         <div className="alert-date">
                           {alert.date instanceof Date ? alert.date.toLocaleDateString('es-AR') : '-'}
                           {alert.isExpired && <span className="tag-expired">Vencido</span>}
+                          {!alert.isExpired && <span className="tag-pending">Pendiente</span>}
                         </div>
                       </div>
                     ))

@@ -104,8 +104,8 @@ export const getChassisById = async (req, res) => {
             estado_cedula_chasis: calcularEstadoFecha(chassis.vencimiento_cedula_chasis),
             estado_vtv_chasis: calcularEstadoFecha(chassis.vencimiento_vtv_chasis),
             estado_senasa_chasis: calcularEstadoFecha(chassis.vencimiento_senasa_chasis),
-            estado_tipificacion_chasis: calcularEstadoFecha(chassis.vencimiento_tipificacion_carga_chasis),
-            estado_homologacion_chasis: calcularEstadoFecha(chassis.vencimiento_homologacion_chasis),
+            estado_tipificacion_chasis: null,
+            estado_homologacion_chasis: null,
         };
 
         const duration = Date.now() - startTime;
@@ -159,8 +159,6 @@ export const createChassis = async (req, res) => {
             vencimiento_cedula: rawData.vencimiento_cedula_chasis,
             vencimiento_vtv: rawData.vencimiento_vtv_chasis,
             vencimiento_senasa: rawData.vencimiento_senasa_chasis,
-            vencimiento_homologacion: rawData.vencimiento_homologacion_chasis,
-            vencimiento_tipificacion_carga: rawData.vencimiento_tipificacion_carga_chasis,
         });
 
         const cleanDate = (date) => (date === '' || date === 'null' || date === undefined) ? null : date;
@@ -184,9 +182,14 @@ export const createChassis = async (req, res) => {
         };
 
         const [newId] = await connection('chasis').insert(chassisToSave);
+        const createdChassis = await connection('chasis').where({ id: newId }).first();
+        const createdChassisWithStatus = {
+            ...createdChassis,
+            info_completa: verificarInfoCompleta(createdChassis)
+        };
 
         logger.info(`✅ Chasis creado ID: ${newId}`);
-        res.status(201).json({ success: true, data: { id: newId, ...chassisToSave } });
+        res.status(201).json({ success: true, data: createdChassisWithStatus });
 
     } catch (error) {
         await rollbackUploadedFiles(files);
@@ -263,8 +266,6 @@ export const updateChassis = async (req, res) => {
             vencimiento_cedula: chassisToUpdate.vencimiento_cedula_chasis,
             vencimiento_vtv: chassisToUpdate.vencimiento_vtv_chasis,
             vencimiento_senasa: chassisToUpdate.vencimiento_senasa_chasis,
-            vencimiento_homologacion: chassisToUpdate.vencimiento_homologacion_chasis,
-            vencimiento_tipificacion_carga: chassisToUpdate.vencimiento_tipificacion_carga_chasis,
         });
 
         chassisToUpdate.updated_at = new Date();
@@ -298,7 +299,13 @@ export const updateChassis = async (req, res) => {
             await Promise.all(oldFilesToDelete.map(url => deleteFileFromCloudinary(url)));
         }
 
-        res.status(200).json({ success: true, message: 'Actualizado', data: chassisToUpdate });
+        const updatedChassis = await connection('chasis').where({ id }).first();
+        const updatedChassisWithStatus = {
+            ...updatedChassis,
+            info_completa: verificarInfoCompleta(updatedChassis)
+        };
+
+        res.status(200).json({ success: true, message: 'Actualizado', data: updatedChassisWithStatus });
 
     } catch (error) {
         await rollbackUploadedFiles(files);

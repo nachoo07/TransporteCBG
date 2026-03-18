@@ -4,7 +4,7 @@ import logger from '../../utils/pino/logger.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
-export const loginUser = async (req, res) => {
+export const login_user = async (req, res) => {
     const start = Date.now();
     logger.info('Iniciando petición de login...');
 
@@ -116,7 +116,7 @@ export const loginUser = async (req, res) => {
     }
 };
 
-export const logoutUser = async (req, res) => {
+export const logout_user = async (req, res) => {
     const start = Date.now();
     logger.info('Iniciando petición de logout...');
 

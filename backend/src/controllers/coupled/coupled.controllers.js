@@ -24,6 +24,20 @@ const verificarInfoCompleta = (coupled) => {
     return camposObligatorios.every(campo => campo !== null && campo !== undefined && campo !== '' );
 };
 
+const rollbackUploadedFiles = async (files) => {
+    const fileKeys = Object.keys(files);
+    if (fileKeys.length > 0) {
+        await Promise.all(fileKeys.map(key => {
+            const f = files[key][0];
+            const isPdf = f.mimetype === 'application/pdf';
+            return cloudinaryInstance.uploader.destroy(
+                f.filename,
+                { resource_type: isPdf ? 'raw' : 'image' }
+            );
+        }));
+    }
+};
+
 
 export const getAllCoupled = async (req, res) => {
     const startTime = Date.now();
@@ -110,8 +124,8 @@ export const getCoupledById = async (req, res) => {
                     estado_cedula_acoplado: calcularEstadoFecha(coupled.vencimiento_cedula_acoplado),
                     estado_vtv_acoplado: calcularEstadoFecha(coupled.vencimiento_vtv_acoplado),
                     estado_senasa_acoplado: calcularEstadoFecha(coupled.vencimiento_senasa_acoplado),
-                    estado_tipificacion_acoplado: calcularEstadoFecha(coupled.vencimiento_tipificacion_carga_acoplado),
-                    estado_homologacion_acoplado: calcularEstadoFecha(coupled.vencimiento_homologacion_acoplado),
+                    estado_tipificacion_acoplado: null,
+                    estado_homologacion_acoplado: null,
                 };
 
         const duration = Date.now() - startTime;
@@ -156,8 +170,6 @@ export const createCoupled = async (req, res) => {
             vencimiento_cedula: rawData.vencimiento_cedula_acoplado,
             vencimiento_vtv: rawData.vencimiento_vtv_acoplado,
             vencimiento_senasa: rawData.vencimiento_senasa_acoplado,
-            vencimiento_homologacion: rawData.vencimiento_homologacion_acoplado,
-            vencimiento_tipificacion_carga: rawData.vencimiento_tipificacion_carga_acoplado,
         });
 
         const cleanDate = (date) => (date === '' || date === 'null' || date === undefined ? null : date);
@@ -182,6 +194,11 @@ export const createCoupled = async (req, res) => {
         };
         
         const [newCoupledId] = await connection('acoplado').insert(coupledToSave);
+        const createdCoupled = await connection('acoplado').where({ id: newCoupledId }).first();
+        const createdCoupledWithStatus = {
+            ...createdCoupled,
+            info_completa: verificarInfoCompleta(createdCoupled)
+        };
         const duration = Date.now() - startTime;
 
         logger.info({
@@ -192,23 +209,11 @@ export const createCoupled = async (req, res) => {
 
         res.status(201).json({
             success: true,
-            data: { id: newCoupledId, ...coupledToSave }
+            data: createdCoupledWithStatus
         });
     } catch (error) {
-        // Rollback archivos subidos
-        if (Object.keys(files).length > 0) {
-            await Promise.all(
-                Object.keys(files).map(key => {
-                    const f = files[key][0];
-                    const isPdf = f.mimetype === 'application/pdf';
-                    return cloudinaryInstance.uploader.destroy(
-                        f.filename,
-                        { resource_type: isPdf ? 'raw' : 'image' }
-                    );
-                })
-            );
-            logger.info('🗑️ Rollback: Archivos eliminados de Cloudinary');
-        }
+        await rollbackUploadedFiles(files);
+        logger.info('🗑️ Rollback: Archivos eliminados de Cloudinary');
 
         let statuscode = 500;
         let clientMessage = 'Hubo un problema procesando la solicitud. Contacte al soporte.';
@@ -266,18 +271,7 @@ export const updateCoupled = async (req, res) => {
             
             if (existingCoupled) {
                 // Rollback archivos nuevos
-                if (Object.keys(files).length > 0) {
-                    await Promise.all(
-                        Object.keys(files).map(key => {
-                            const f = files[key][0];
-                            const isPdf = f.mimetype === 'application/pdf';
-                            return cloudinaryInstance.uploader.destroy(
-                                f.filename,
-                                { resource_type: isPdf ? 'raw' : 'image' }
-                            );
-                        })
-                    );
-                }
+                await rollbackUploadedFiles(files);
                 return res.status(409).json({
                     success: false,
                     message: `El dominio ${nuevoDominio} ya está registrado en el sistema (Acoplado ID: ${existingCoupled.id}).`
@@ -300,8 +294,6 @@ export const updateCoupled = async (req, res) => {
             vencimiento_cedula: coupledToUpdate.vencimiento_cedula_acoplado || currentCoupled.vencimiento_cedula_acoplado,
             vencimiento_vtv: coupledToUpdate.vencimiento_vtv_acoplado || currentCoupled.vencimiento_vtv_acoplado,
             vencimiento_senasa: coupledToUpdate.vencimiento_senasa_acoplado || currentCoupled.vencimiento_senasa_acoplado,
-            vencimiento_homologacion: coupledToUpdate.vencimiento_homologacion_acoplado || currentCoupled.vencimiento_homologacion_acoplado,
-            vencimiento_tipificacion_carga: coupledToUpdate.vencimiento_tipificacion_carga_acoplado || currentCoupled.vencimiento_tipificacion_carga_acoplado,
         });
 
         coupledToUpdate.updated_at = new Date();
@@ -340,6 +332,12 @@ export const updateCoupled = async (req, res) => {
             await Promise.all(oldFilesToDelete.map(url => deleteFileFromCloudinary(url)));
         }
 
+        const updatedCoupled = await connection('acoplado').where({ id }).first();
+        const updatedCoupledWithStatus = {
+            ...updatedCoupled,
+            info_completa: verificarInfoCompleta(updatedCoupled)
+        };
+
         const duration = Date.now() - startTime;
         logger.info({ 
             event: 'update_acoplado_success', 
@@ -350,24 +348,12 @@ export const updateCoupled = async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Acoplado actualizado correctamente.',
-            data: coupledToUpdate
+            data: updatedCoupledWithStatus
         });
 
     } catch (error) {
-        // Rollback archivos nuevos
-        if (Object.keys(files).length > 0) {
-            await Promise.all(
-                Object.keys(files).map(key => {
-                    const f = files[key][0];
-                    const isPdf = f.mimetype === 'application/pdf';
-                    return cloudinaryInstance.uploader.destroy(
-                        f.filename,
-                        { resource_type: isPdf ? 'raw' : 'image' }
-                    );
-                })
-            );
-            logger.info('🗑️ Rollback: Archivos eliminados de Cloudinary');
-        }
+        await rollbackUploadedFiles(files);
+        logger.info('🗑️ Rollback: Archivos eliminados de Cloudinary');
         logger.error({ 
             event: 'update_acoplado_error', 
             error: error.message, 

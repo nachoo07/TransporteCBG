@@ -29,7 +29,8 @@ const computePaymentBase = ({ tipo, porcentaje, precio_fijo, valor_neto }) => {
     const fixed = toNumberOrNull(precio_fijo);
     return fixed;
   }
-  // PORCENTAJE
+  // PORCENTAJE: el pago del chofer es la porcion del valor del viaje,
+  // no el valor del viaje completo mas ese porcentaje.
   const pct = toNumberOrNull(porcentaje);
   if (net === null || pct === null) return null;
   return (net * pct) / 100;

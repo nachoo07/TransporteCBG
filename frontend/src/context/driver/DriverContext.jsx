@@ -73,8 +73,9 @@ export const DriverProvider = ({ children }) => {
         try {
             const res = await client.post('/drivers/create', driverData);
             const createdFromServer = res.data.data || res.data;
-            // Al crear, confiamos en la respuesta del server
             setDrivers(prev => [...prev, createdFromServer]);
+            await getDrivers();
+            await getInactiveDrivers();
             
             showSuccessToast('¡Chofer registrado correctamente!');
             return true;
@@ -93,11 +94,13 @@ export const DriverProvider = ({ children }) => {
 
             setDrivers(prev => prev.map(d => {
                 if (String(d.id) === String(id)) {
-                    // Reemplazamos completo con lo que devolvió el backend (incluyendo info_completa actualizado)
                     return { ...d, ...updatedFromServer, id: id };
                 }
                 return d;
             }));
+
+            await getDrivers();
+            await getInactiveDrivers();
 
             showSuccessToast('¡Chofer actualizado correctamente!');
             return true;

@@ -21,6 +21,7 @@ const Chassis = () => {
     // Paginación
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
+    const [isSaving, setIsSaving] = useState(false);
 
     // Modal de confirmación para reactivación
     const [reactivateConfirmModal, setReactivateConfirmModal] = useState({ isOpen: false, chassis: null });
@@ -45,9 +46,11 @@ const Chassis = () => {
     const handleCloseDetail = () => { setIsDetailOpen(false); setViewChassis(null); };
 
     const handleSave = async (formData) => {
+        setIsSaving(true);
         let success = selectedChassis
             ? await updateChasis(selectedChassis.id, formData)
             : await createChasis(formData);
+        setIsSaving(false);
         if (success) handleCloseForm();
     };
 
@@ -79,6 +82,16 @@ const Chassis = () => {
         return { color: map[status] || 'green', text: status?.replace('_', ' ') || 'Al día' };
     };
 
+    const getInfoBadge = (isComplete) => (
+        <span
+            className={`fleet-info-badge ${isComplete ? 'is-complete' : 'is-missing'}`}
+            title={isComplete ? 'Legajo completo' : 'Falta documentación'}
+        >
+            <span aria-hidden="true">{isComplete ? '✅' : '⚠️'}</span>
+            <span>{isComplete ? 'Legajo completo' : 'Falta documentación'}</span>
+        </span>
+    );
+
     // Reset de búsqueda al cambiar de pestaña
     React.useEffect(() => { setCurrentPage(1); }, [activeTab, search]);
 
@@ -91,14 +104,14 @@ const Chassis = () => {
     const ChassisTable = ({ data, showReactivate = false }) => {
         const totalPages = Math.ceil(data.length / itemsPerPage);
         return (
-            <>
+            <div className="fleet-table-shell">
                 <div className="table-responsive">
-                    <table className="fleet-table">
+                    <table className={`fleet-table ${showReactivate ? 'fleet-table-archived' : 'fleet-table-active'}`}>
                         <thead>
                             <tr>
-                                <th style={{ width: '50px' }}>Info</th>
                                 <th>Dominio (Patente)</th>
                                 <th>Vencimientos</th>
+                                <th style={{ width: '190px' }}>Documentacion</th>
                                 {showReactivate && <th>Fecha de Archivo</th>}
                                 <th>Acciones</th>
                             </tr>
@@ -108,16 +121,14 @@ const Chassis = () => {
                                 const status = getStatusConfig(item.estado_general);
                                 return (
                                     <tr key={item.id} className={!item.activo ? 'inactive-row' : ''}>
-                                        <td style={{ textAlign: 'center', fontSize: '1.2rem' }}>
-                                            {item.info_completa
-                                                ? <span title="Legajo Completo">✅</span>
-                                                : <span title="Falta documentación">⚠️</span>
-                                            }
-                                        </td>
+
                                         <td><strong>{item.Dominio_chasis}</strong></td>
                                         <td>
                                             <span className={`traffic-light light-${status.color}`}></span>
                                             {status.text}
+                                        </td>
+                                        <td>
+                                            {getInfoBadge(item.info_completa)}
                                         </td>
                                         {showReactivate && (
                                             <td>
@@ -125,23 +136,23 @@ const Chassis = () => {
                                             </td>
                                         )}
                                         <td>
-                                            <button className="action-btn view" title="Ver Detalle" onClick={() => handleOpenDetail(item)}>
+                                            <button className="btn-action-chassis" title="Ver Detalle" onClick={() => handleOpenDetail(item)}>
                                                 👁️
                                             </button>
                                             {showReactivate ? (
-                                                <button className="action-btn reactivate" title="Reactivar" onClick={() => handleReactivateClick(item)}>
+                                                <button className="btn-action-chassis" title="Reactivar" onClick={() => handleReactivateClick(item)}>
                                                     ♻️
                                                 </button>
                                             ) : (
                                                 <>
-                                                    <button className="action-btn edit" title="Editar" onClick={() => handleOpenEdit(item)}>
+                                                    <button className="btn-action-chassis" title="Editar" onClick={() => handleOpenEdit(item)}>
                                                         ✏️
                                                     </button>
-                                                    <button className="action-btn delete" title="Archivar" onClick={() => handleDeleteClick(item)}>
-                                                        🗑️
+                                                    <button className="btn-action-chassis" title="Archivar" onClick={() => handleDeleteClick(item)}>
+                                                        🗂️
                                                     </button>
                                                 </>
-                    )}
+                                            )}
                                         </td>
                                     </tr>
                                 );
@@ -150,70 +161,77 @@ const Chassis = () => {
                     </table>
                     {data.length === 0 && <p className="empty-msg">No hay chasis en esta categoría.</p>}
                 </div>
-                {/* PAGINACIÓN */}
-                {totalPages > 1 && (
-                    <div className="chassis-pagination">
-                        <button
-                            className="chassis-pagination-btn"
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                        >
-                            &lt;
-                        </button>
-                        {Array.from({ length: totalPages }, (_, i) => (
+                <div className="fleet-table-footer">
+                    {totalPages > 1 && (
+                        <div className="chassis-pagination">
                             <button
-                                key={i + 1}
-                                className={`chassis-pagination-btn${currentPage === i + 1 ? ' active' : ''}`}
-                                onClick={() => setCurrentPage(i + 1)}
+                                className="chassis-pagination-btn"
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
                             >
-                                {i + 1}
+                                &lt;
                             </button>
-                        ))}
-                        <button
-                            className="chassis-pagination-btn"
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages}
-                        >
-                            &gt;
-                        </button>
-                    </div>
-                )}
-            </>
+                            {Array.from({ length: totalPages }, (_, i) => (
+                                <button
+                                    key={i + 1}
+                                    className={`chassis-pagination-btn${currentPage === i + 1 ? ' active' : ''}`}
+                                    onClick={() => setCurrentPage(i + 1)}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
+                            <button
+                                className="chassis-pagination-btn"
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                &gt;
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
         );
     };
 
     return (
         <>
-            {/* PESTAÑAS */}
-            <div className="tabs-container">
-                <div>
-                    <button
-                        className={`tab-button ${activeTab === 'active' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('active')}
-                    >
-                        👤 Activos ({chasis.length})
-                    </button>
-                    <button
-                        className={`tab-button ${activeTab === 'inactive' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('inactive')}
-                    >
-                        📦 Archivados ({inactiveChasis.length})
-                    </button>
+            <div className="fleet-control-panel">
+                <div className="fleet-control-header">
+                    <span className="fleet-control-title">Gestión de chasis</span>
                 </div>
-                {/* BUSCADOR */}
-                <div >
-                    <input
-                        type="text"
-                        className="driver-search-input"
-                        placeholder="Buscar por dominio..."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                    />
-                </div>
-                <div className="tab-actions-header">
-                    {activeTab === 'active' && (
-                        <button onClick={handleOpenCreate} className="btn-add-chassis">+ Nuevo Chasis</button>
-                    )}
+
+                <div className="fleet-toolbar-row">
+                    <div className="fleet-tabs-group fleet-tabs-segmented">
+                        <button
+                            className={`tab-btn fleet-tab-button ${activeTab === 'active' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('active')}
+                        >
+                            Activos ({chasis.length})
+                        </button>
+                        <button
+                            className={`tab-btn fleet-tab-button ${activeTab === 'inactive' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('inactive')}
+                        >
+                            Archivados ({inactiveChasis.length})
+                        </button>
+                    </div>
+
+                    <div className="fleet-search-wrap fleet-search-wrap-wide">
+                        <input
+                            type="text"
+                            className="driver-search-input fleet-search-input"
+                            placeholder="Buscar por dominio..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="tab-actions-header fleet-actions-header">
+                        {activeTab === 'active' && (
+                            <button onClick={handleOpenCreate} className="btn-add-chassis fleet-add-btn">+ Nuevo Chasis</button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -233,6 +251,7 @@ const Chassis = () => {
                 onClose={handleCloseForm}
                 onSubmit={handleSave}
                 chassisToEdit={selectedChassis}
+                isSaving={isSaving}
             />
 
             {/* MODAL DETALLE (Lectura) */}

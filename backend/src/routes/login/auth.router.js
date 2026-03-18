@@ -1,23 +1,43 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { loginUser, logoutUser } from '../../controllers/login/auth.controller.js';
+import { login_user, logout_user } from '../../controllers/login/auth.controller.js';
 import { refreshAccessToken } from '../../controllers/refreshToken/refreshToken.controllers.js';
-import { upload } from '../../../files/cloudinary.js';
-import logger from '../../utils/pino/logger.js';
-import { verifyToken } from '../../middlewares/login/auth.middlewares.js';
 
 const router = express.Router();
 
-// Rate limiter para endpoints sensibles
-const authLimiter = rateLimit({
+// Límite estricto para login: evita fuerza bruta sin bloquear de más a usuarios válidos.
+const login_limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 10, // máximo 10 intentos por ventana
+    max: 25,
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+    handler: (req, res) => {
+        const resetTime = req.rateLimit?.resetTime instanceof Date
+            ? Math.max(1, Math.ceil((req.rateLimit.resetTime.getTime() - Date.now()) / 60000))
+            : 15;
+
+        return res.status(429).json({
+            success: false,
+            message: `Demasiados intentos de inicio de sesión. Esperá ${resetTime} minuto(s) antes de volver a intentar.`
+        });
+    }
 });
 
-router.post('/login', authLimiter, loginUser);
-router.post('/logout', logoutUser);
-router.post('/refresh-token', authLimiter, refreshAccessToken);
+// Límite más permisivo para refresh para no romper la sesión por múltiples tabs/reintentos.
+const refresh_limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        success: false,
+        message: 'Demasiadas solicitudes de refresh. Intentá nuevamente en unos minutos.'
+    }
+});
+
+router.post('/login', login_limiter, login_user);
+router.post('/logout', logout_user);
+router.post('/refresh-token', refresh_limiter, refreshAccessToken);
 
 export default router;

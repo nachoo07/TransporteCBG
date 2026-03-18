@@ -208,21 +208,21 @@ import './driverFormModal.css';
                     <div className="dfm-row">
                         <div className="dfm-group">
                             <label>Nombre</label>
-                            <input type="text" name="nombre" className="dfm-input" value={formData.nombre} onChange={handleChange} required />
+                            <input type="text" placeholder="Nombre" name="nombre" className="dfm-input" value={formData.nombre} onChange={handleChange} required />
                         </div>
                         <div className="dfm-group">
                             <label>Apellido</label>
-                            <input type="text" name="apellido" className="dfm-input" value={formData.apellido} onChange={handleChange} required />
+                            <input type="text" placeholder="Apellido" name="apellido" className="dfm-input" value={formData.apellido} onChange={handleChange} required />
                         </div>
                         <div className="dfm-group">
                             <label>Dni</label>
-                            <input type="text"  name="dni" className="dfm-input" value={formData.dni} onChange={handleChange} required />
+                            <input type="text" placeholder="Dni" name="dni" className="dfm-input" value={formData.dni} onChange={handleChange} required />
                         </div>
                     </div>
                     <div className="dfm-row-f-d">
                         <div className="dfm-group">
                             <label>Fecha de Alta</label>
-                            <input type="date" name="fecha_de_alta" className="dfm-input" value={formData.fecha_de_alta} onChange={handleChange} />
+                            <input type="date"  name="fecha_de_alta" className="dfm-input" value={formData.fecha_de_alta} onChange={handleChange} />
                         </div>
                         <FileControl label="Foto DNI" inputName="archivo_dni" currentUrl={driverToEdit?.url_dni} />
                     </div>

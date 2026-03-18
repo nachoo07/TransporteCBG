@@ -133,6 +133,8 @@ const bulkDocsSchema = Joi.object({
   invoice_status: Joi.string().valid('FALTA', 'FACTURADO').optional(),
   liquidation_status: Joi.string().valid('FALTA', 'LIQUIDADO').optional(),
   carta_de_porte: Joi.string().max(255).allow(null, '').optional(),
+  payment_order: Joi.string().max(255).allow(null, '').optional(),
+  payment_status: Joi.string().valid('DEBEN', 'PAGADO').optional(),
 }).messages({
   'any.required': 'Missing required fields'
 });

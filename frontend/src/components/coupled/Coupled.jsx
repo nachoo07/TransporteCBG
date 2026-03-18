@@ -21,6 +21,7 @@ const Coupled = () => {
     // Paginación
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
+    const [isSaving, setIsSaving] = useState(false);
 
     // Estado de busqueda
     const [search, setSearch] = useState('');
@@ -41,9 +42,11 @@ const Coupled = () => {
     const handleCloseDetail = () => { setIsDetailOpen(false); setViewCoupled(null); };
 
     const handleSave = async (formData) => {
+        setIsSaving(true);
         let success = selectedCoupled
             ? await updateCoupled(selectedCoupled.id, formData)
             : await createCoupled(formData);
+        setIsSaving(false);
         if (success) handleClose();
     };
 
@@ -63,6 +66,16 @@ const Coupled = () => {
         return { color: map[status] || 'green', text: status?.replace('_', ' ') || 'Al día' };
     };
 
+    const getInfoBadge = (isComplete) => (
+        <span
+            className={`fleet-info-badge ${isComplete ? 'is-complete' : 'is-missing'}`}
+            title={isComplete ? 'Legajo completo' : 'Falta documentación'}
+        >
+            <span aria-hidden="true">{isComplete ? '✅' : '⚠️'}</span>
+            <span>{isComplete ? 'Legajo completo' : 'Falta documentación'}</span>
+        </span>
+    );
+
     // Reset de búsqueda al cambiar de pestaña
     React.useEffect(() => { setCurrentPage(1); }, [activeTab, search]);
 
@@ -76,14 +89,14 @@ const Coupled = () => {
     const CoupledTable = ({ data, showReactivate = false }) => {
         const totalPages = Math.ceil(data.length / itemsPerPage);
         return (
-            <>
+            <div className="fleet-table-shell">
                 <div className="table-responsive">
-                    <table className="fleet-table">
+                    <table className={`fleet-table ${showReactivate ? 'fleet-table-archived' : 'fleet-table-active'}`}>
                         <thead>
                             <tr>
-                                <th style={{ width: '50px' }}>Info</th>
                                 <th>Dominio (Patente)</th>
                                 <th>Vencimientos</th>
+                                <th style={{ width: '190px' }}>Documentación</th>
                                 {showReactivate && <th>Fecha de Archivo</th>}
                                 <th>Acciones</th>
                             </tr>
@@ -93,16 +106,13 @@ const Coupled = () => {
                                 const status = getStatusConfig(item.estado_general);
                                 return (
                                     <tr key={item.id} className={!item.activo ? 'inactive-row' : ''}>
-                                        <td style={{ textAlign: 'center', fontSize: '1.2rem' }}>
-                                            {item.info_completa
-                                                ? <span title="Legajo Completo">✅</span>
-                                                : <span title="Falta documentación">⚠️</span>
-                                            }
-                                        </td>
                                         <td><strong>{item.Dominio_acoplado}</strong></td>
                                         <td>
                                             <span className={`traffic-light light-${status.color}`}></span>
                                             {status.text}
+                                        </td>
+                                        <td>
+                                            {getInfoBadge(item.info_completa)}
                                         </td>
                                         {showReactivate && (
                                             <td>
@@ -110,20 +120,20 @@ const Coupled = () => {
                                             </td>
                                         )}
                                         <td>
-                                            <button className="action-btn view" title="Ver Detalle" onClick={() => handleOpenDetail(item)}>
+                                            <button className="btn-action-chassis" title="Ver Detalle" onClick={() => handleOpenDetail(item)}>
                                                 👁️
                                             </button>
                                             {showReactivate ? (
-                                                <button className="action-btn reactivate" title="Reactivar" onClick={() => reactivateCoupled(item.id)}>
+                                                <button className="btn-action-chassis" title="Reactivar" onClick={() => reactivateCoupled(item.id)}>
                                                     ♻️
                                                 </button>
                                             ) : (
                                                 <>
-                                                    <button className="action-btn edit" title="Editar" onClick={() => handleOpenEdit(item)}>
+                                                    <button className="btn-action-chassis" title="Editar" onClick={() => handleOpenEdit(item)}>
                                                         ✏️
                                                     </button>
-                                                <button className="action-btn delete" title="Archivar" onClick={() => handleDeleteClick(item)}>
-                                                    🗑️
+                                                <button className="btn-action-chassis" title="Archivar" onClick={() => handleDeleteClick(item)}>
+                                                    🗂️
                                                 </button>
                                                 </>
                                             )}
@@ -163,45 +173,50 @@ const Coupled = () => {
                         </button>
                     </div>
                 )}
-            </>
+            </div>
         )
     };
 
     return (
         <>
-            {/* PESTAÑAS */}
-            <div className="tabs-container">
-                <div>
-                    <button
-                        className={`tab-button ${activeTab === 'active' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('active')}
-                    >
-                        👤  Activos ({coupled.length})
-                    </button>
-                    <button
-                        className={`tab-button ${activeTab === 'inactive' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('inactive')}
-                    >
-                        📦 Archivados ({inactiveCoupled.length})
-                    </button>
+            <div className="fleet-control-panel">
+                <div className="fleet-control-header">
+                    <span className="fleet-control-title">Gestión de acoplados</span>
                 </div>
-                 {/* BUSCADOR */}
-            <div >
-                <input
-                    type="text"
-                    className="driver-search-input"
-                    placeholder="Buscar por dominio..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                />
+
+                <div className="fleet-toolbar-row">
+                    <div className="fleet-tabs-group fleet-tabs-segmented">
+                        <button
+                            className={`tab-btn fleet-tab-button ${activeTab === 'active' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('active')}
+                        >
+                            Activos ({coupled.length})
+                        </button>
+                        <button
+                            className={`tab-btn fleet-tab-button ${activeTab === 'inactive' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('inactive')}
+                        >
+                            Archivados ({inactiveCoupled.length})
+                        </button>
+                    </div>
+
+                    <div className="fleet-search-wrap fleet-search-wrap-wide">
+                        <input
+                            type="text"
+                            className="driver-search-input fleet-search-input"
+                            placeholder="Buscar por dominio..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="tab-actions-header fleet-actions-header">
+                        {activeTab === 'active' && (
+                            <button onClick={handleOpenCreate} className="btn-add-chassis fleet-add-btn">+ Nuevo Acoplado</button>
+                        )}
+                    </div>
+                </div>
             </div>
-            <div className="tab-actions-header">
-                {activeTab === 'active' && (
-                    <button onClick={handleOpenCreate} className="btn-add-chassis">+ Nuevo Acoplado</button>
-                )}
-            </div>
-            </div>
-           
 
             {!loading ? (
                 activeTab === 'active' ? (
@@ -218,6 +233,7 @@ const Coupled = () => {
                 onClose={handleClose}
                 onSubmit={handleSave}
                 coupledToEdit={selectedCoupled}
+                isSaving={isSaving}
             />
 
             <CoupledDetailModal

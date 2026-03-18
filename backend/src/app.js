@@ -16,11 +16,20 @@ export const createApp = () => {
   const app = express();
 
   app.use(helmet());
+  // Running behind Nginx/reverse proxy in production: trust X-Forwarded-* headers.
+  app.set('trust proxy', 1);
 
-  const whitelist = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000')
+  const localDevOrigins = [
+    'http://localhost:5177',
+    'http://localhost:3000',
+  ];
+
+  const envOrigins = (process.env.CORS_ORIGINS || '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+
+  const whitelist = [...new Set([...localDevOrigins, ...envOrigins])];
 
   app.use(cors({
     origin: (origin, callback) => {

@@ -102,6 +102,12 @@ const deriveLiquidationState = ({ cartaDePorte, currentState }) => {
   return hasValue(cartaDePorte) ? 'LIQUIDADO' : 'FALTA';
 };
 
+const derivePaymentState = ({ paymentOrder, currentState }) => {
+  const explicit = normalizeState(currentState, '');
+  if (explicit) return explicit;
+  return hasValue(paymentOrder) ? 'PAGADO' : 'DEBEN';
+};
+
 const deriveGeneralState = ({ liquidationState, invoiceState, paymentState }) => {
   if (
     normalizeState(liquidationState, 'FALTA') !== 'FALTA' &&
@@ -571,7 +577,7 @@ export const bulkDocsUpdate = async (req, res) => {
     }
 
     const currentTravels = await db('viajes_registrados')
-      .select('id', 'empresa_id', 'anulado', 'foto_factura', 'archivo_factura_liquidado')
+      .select('id', 'empresa_id', 'anulado', 'foto_factura', 'archivo_factura_liquidado', 'orden_pago', 'estado_pago')
       .whereIn('id', ids);
 
     const found = new Set(currentTravels.map((t) => Number(t.id)));
@@ -603,6 +609,7 @@ export const bulkDocsUpdate = async (req, res) => {
     const updateData = {};
     const hasInvoiceNumber = typeof data.invoice_number === 'string' && data.invoice_number.trim().length > 0;
     const hasCartaPorte = typeof data.carta_de_porte === 'string' && data.carta_de_porte.trim().length > 0;
+    const hasPaymentOrder = typeof data.payment_order === 'string' && data.payment_order.trim().length > 0;
 
     if (data.invoice_date) {
       const formatted = formatDateForDB(data.invoice_date);
@@ -617,6 +624,7 @@ export const bulkDocsUpdate = async (req, res) => {
 
     if (hasInvoiceNumber) updateData.numero_factura = data.invoice_number.trim();
     if (hasCartaPorte) updateData.carta_de_porte = data.carta_de_porte.trim();
+    if (hasPaymentOrder) updateData.orden_pago = data.payment_order.trim();
 
     const oldInvoiceUrls = new Set();
     if (files.invoice_photo && files.invoice_photo[0]) {
@@ -636,6 +644,7 @@ export const bulkDocsUpdate = async (req, res) => {
 
     const hasInvoiceSignal = hasInvoiceNumber || Boolean(files.invoice_photo && files.invoice_photo[0]) || Boolean(data.invoice_date);
     const hasLiquidationSignal = hasCartaPorte || Boolean(files.archivo_factura_liquidado && files.archivo_factura_liquidado[0]);
+    const hasPaymentSignal = hasPaymentOrder;
 
     if (data.invoice_status || hasInvoiceSignal) {
       updateData.estado_facturacion = deriveInvoiceState({
@@ -648,6 +657,12 @@ export const bulkDocsUpdate = async (req, res) => {
       updateData.estado_liquidacion = deriveLiquidationState({
         cartaDePorte: hasCartaPorte ? data.carta_de_porte.trim() : null,
         currentState: data.liquidation_status || (hasLiquidationSignal ? 'LIQUIDADO' : ''),
+      });
+    }
+    if (data.payment_status || hasPaymentSignal) {
+      updateData.estado_pago = derivePaymentState({
+        paymentOrder: hasPaymentOrder ? data.payment_order.trim() : null,
+        currentState: data.payment_status || (hasPaymentSignal ? 'PAGADO' : ''),
       });
     }
 

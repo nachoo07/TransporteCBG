@@ -81,6 +81,28 @@
     background-color: #f8fafc; /* Efecto hover en las filas */
 }
 
+.fleet-info-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.fleet-info-badge.is-complete {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.fleet-info-badge.is-missing {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
 /* Semáforos (Luces de estado) */
 .traffic-light {
     display: inline-block;
